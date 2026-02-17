@@ -36,7 +36,7 @@ if [ -z "$CWD" ]; then
   CWD="$(pwd)"
 fi
 
-KEY="$(basename "$CWD" | tr -c 'a-zA-Z0-9_-' '_')"
+KEY="$(basename "$CWD" | tr -c 'a-zA-Z0-9_-' '_' | sed 's/_$//')"
 
 cat > "$STATE_DIR/$KEY.json" <<EOJSON
 {

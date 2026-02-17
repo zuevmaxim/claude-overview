@@ -1,11 +1,13 @@
 import { unlinkSync } from "node:fs";
+import { basename } from "node:path";
 import type { Config, SessionInfo, WorktreeInfo } from "./types.js";
 import * as tmux from "./tmux.js";
 import { detectSessionState, stateFilePath } from "./state-detector.js";
 import { openTerminalAttached } from "./terminal.js";
 
+/** Derive key from path basename — must match the hook scripts' logic. */
 function worktreeKey(wt: WorktreeInfo): string {
-  return wt.label.replace(/[^a-zA-Z0-9_-]/g, "_");
+  return basename(wt.path).replace(/[^a-zA-Z0-9_-]/g, "_");
 }
 
 function sessionName(prefix: string, wt: WorktreeInfo): string {
