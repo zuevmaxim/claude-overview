@@ -70,6 +70,31 @@ You can also pass `--config /path/to/config.json` explicitly.
 ## How it works
 
 1. **New session** — press `n`, pick a worktree, and a tmux session is created running `claude` in that directory.
-2. **Monitoring** — the dashboard polls hook state files to show whether each session is running, waiting for input, or ended. Claude Code hooks are automatically installed into `~/.claude/settings.json` on first run.
+2. **Monitoring** — the dashboard polls hook state files to show whether each session is running, waiting for input, or ended.
 3. **Attach** — press `Enter` to open a Terminal.app window attached to the tmux session. Closing the window detaches without killing Claude.
 4. **Kill** — press `d` to kill the tmux session and clean up its state file.
+
+## Hooks & file locations
+
+On startup, claude-overview automatically installs [Claude Code hooks](https://docs.anthropic.com/en/docs/claude-code/hooks) to track session state. No manual setup needed.
+
+**Claude Code settings** — hooks are registered in:
+- `~/.claude/settings.json`
+
+The following hook events are registered:
+
+| Hook Event | State written | Meaning |
+|---|---|---|
+| `SessionStart` | `waiting` | Claude started, showing initial prompt |
+| `UserPromptSubmit` | `running` | User submitted a prompt, Claude is working |
+| `Stop` | `waiting` | Claude finished responding, waiting for input |
+| `Notification` | `waiting` | Claude needs permission approval |
+| `SessionEnd` | `ended` | Session exited |
+
+**Hook scripts** are stored in:
+- `~/.local/share/claude-overview/hooks/`
+
+**Session state files** are written by hooks to:
+- `~/.local/state/claude-overview/sessions/<worktree-dir>.json`
+
+Each state file contains the current state, timestamp, event name, and session ID. The dashboard reads these files on each poll cycle to update the display.
