@@ -56,18 +56,6 @@ A config file is only needed if you want to override defaults or add worktrees m
 
 You can also pass `--config /path/to/config.json` explicitly.
 
-## Setup hooks (optional but recommended)
-
-To get accurate "waiting for input" detection, install Claude Code hooks:
-
-```bash
-node dist/cli.js setup
-```
-
-This creates hook scripts in `~/.local/share/claude-overview/hooks/` and registers them in `~/.claude/settings.json`. The hooks write session state to `~/.local/state/claude-overview/sessions/` so the dashboard knows when Claude is waiting for input vs actively running.
-
-Without hooks, the dashboard falls back to analyzing tmux pane content with regex, which is less reliable.
-
 ## Keybindings
 
 | Key | Action |
@@ -82,6 +70,6 @@ Without hooks, the dashboard falls back to analyzing tmux pane content with rege
 ## How it works
 
 1. **New session** — press `n`, pick a worktree, and a tmux session is created running `claude` in that directory.
-2. **Monitoring** — the dashboard polls tmux + hook state files to show whether each session is running, waiting for input, or ended.
+2. **Monitoring** — the dashboard polls hook state files to show whether each session is running, waiting for input, or ended. Claude Code hooks are automatically installed into `~/.claude/settings.json` on first run.
 3. **Attach** — press `Enter` to open a Terminal.app window attached to the tmux session. Closing the window detaches without killing Claude.
 4. **Kill** — press `d` to kill the tmux session and clean up its state file.

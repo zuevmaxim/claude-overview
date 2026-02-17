@@ -61,68 +61,62 @@ interface HookEntry {
 
 type HooksMap = Record<string, HookEntry[]>;
 
-export function runSetup(): void {
-  console.log("Setting up Claude Overview hooks...\n");
+const HOOK_DEFS: Array<{ event: string; state: string; filename: string; matcher: string }> = [
+  { event: "Stop", state: "waiting", filename: "on-stop.sh", matcher: "" },
+  { event: "Notification", state: "waiting", filename: "on-notification.sh", matcher: "" },
+  { event: "UserPromptSubmit", state: "running", filename: "on-prompt-submit.sh", matcher: "" },
+  { event: "SessionStart", state: "waiting", filename: "on-session-start.sh", matcher: "" },
+  { event: "SessionEnd", state: "ended", filename: "on-session-end.sh", matcher: "" },
+];
 
-  // 1. Create state directory
+/**
+ * Ensure hooks are set up. Silently creates/updates only what's missing.
+ * Safe to call on every startup.
+ */
+export function ensureSetup(): void {
   mkdirSync(STATE_DIR, { recursive: true });
-  console.log(`  Created state directory: ${STATE_DIR}`);
-
-  // 2. Create hook scripts
   mkdirSync(HOOKS_DIR, { recursive: true });
 
-  const hookDefs: Array<{ event: string; state: string; filename: string; matcher: string }> = [
-    { event: "Stop", state: "waiting", filename: "on-stop.sh", matcher: "" },
-    { event: "Notification", state: "waiting", filename: "on-notification.sh", matcher: "" },
-    { event: "UserPromptSubmit", state: "running", filename: "on-prompt-submit.sh", matcher: "" },
-    { event: "SessionStart", state: "waiting", filename: "on-session-start.sh", matcher: "" },
-    { event: "SessionEnd", state: "ended", filename: "on-session-end.sh", matcher: "" },
-  ];
-
-  for (const h of hookDefs) {
-    const scriptPath = join(HOOKS_DIR, h.filename);
-    writeFileSync(scriptPath, makeHookScript(h.state, h.event), { mode: 0o755 });
-    console.log(`  Created hook script: ${scriptPath}`);
+  // Write hook scripts (always overwrite to keep them up to date)
+  for (const h of HOOK_DEFS) {
+    writeFileSync(join(HOOKS_DIR, h.filename), makeHookScript(h.state, h.event), { mode: 0o755 });
   }
 
-  // 3. Update ~/.claude/settings.json
+  // Read existing settings
   let settings: Record<string, unknown> = {};
   if (existsSync(SETTINGS_PATH)) {
     try {
       settings = JSON.parse(readFileSync(SETTINGS_PATH, "utf-8"));
     } catch {
-      console.warn(`  Warning: Could not parse ${SETTINGS_PATH}, creating new`);
+      // Corrupted file, start fresh
     }
   } else {
-    const claudeDir = join(homedir(), ".claude");
-    mkdirSync(claudeDir, { recursive: true });
+    mkdirSync(join(homedir(), ".claude"), { recursive: true });
   }
 
   const existingHooks = (settings["hooks"] ?? {}) as HooksMap;
+  let changed = false;
 
-  for (const h of hookDefs) {
+  for (const h of HOOK_DEFS) {
     const scriptPath = join(HOOKS_DIR, h.filename);
     const newHook: CommandHook = { type: "command", command: scriptPath };
 
     if (!existingHooks[h.event]) {
-      // No entries for this event yet
       existingHooks[h.event] = [{ matcher: h.matcher, hooks: [newHook] }];
+      changed = true;
     } else {
-      // Check if our script is already registered
       const alreadyRegistered = existingHooks[h.event].some((entry) =>
         entry.hooks.some((hook) => hook.type === "command" && hook.command === scriptPath),
       );
       if (!alreadyRegistered) {
         existingHooks[h.event].push({ matcher: h.matcher, hooks: [newHook] });
+        changed = true;
       }
     }
   }
 
-  settings["hooks"] = existingHooks;
-  writeFileSync(SETTINGS_PATH, JSON.stringify(settings, null, 2) + "\n");
-  console.log(`  Updated ${SETTINGS_PATH}`);
-
-  console.log("\nSetup complete! Hook events will write state to:");
-  console.log(`  ${STATE_DIR}/<worktree-key>.json`);
-  console.log("\nStart the dashboard with: claude-overview");
+  if (changed) {
+    settings["hooks"] = existingHooks;
+    writeFileSync(SETTINGS_PATH, JSON.stringify(settings, null, 2) + "\n");
+  }
 }

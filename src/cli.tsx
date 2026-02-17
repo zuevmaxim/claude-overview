@@ -4,13 +4,12 @@ import { render } from "ink";
 import meow from "meow";
 import { loadConfig } from "./lib/config.js";
 import { App } from "./app.js";
-import { runSetup } from "./setup.js";
+import { ensureSetup } from "./setup.js";
 
 const cli = meow(
   `
   Usage
     $ claude-overview              Start the dashboard
-    $ claude-overview setup        Install Claude Code hooks
 
   Options
     --config, -c  Path to config file
@@ -31,11 +30,6 @@ const cli = meow(
   },
 );
 
-const command = cli.input[0] ?? process.argv.find((a) => a === "setup");
-
-if (command === "setup") {
-  runSetup();
-} else {
-  const config = loadConfig(cli.flags.config);
-  render(<App config={config} />);
-}
+ensureSetup();
+const config = loadConfig(cli.flags.config);
+render(<App config={config} />);
