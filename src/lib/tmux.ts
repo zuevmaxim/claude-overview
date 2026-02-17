@@ -6,6 +6,19 @@ export interface TmuxSessionInfo {
   attached: boolean;
 }
 
+/** Parse raw tmux list-sessions output into structured data, filtering by prefix. */
+export function parseTmuxOutput(output: string, prefix: string): TmuxSessionInfo[] {
+  return output
+    .trim()
+    .split("\n")
+    .filter((l) => l.length > 0)
+    .map((line) => {
+      const [name, created, attached] = line.split("\t");
+      return { name, created: parseInt(created, 10), attached: attached !== "0" };
+    })
+    .filter((s) => s.name.startsWith(prefix));
+}
+
 /** List all tmux sessions matching a prefix. */
 export function listSessions(prefix: string): TmuxSessionInfo[] {
   try {
@@ -13,15 +26,7 @@ export function listSessions(prefix: string): TmuxSessionInfo[] {
       `tmux list-sessions -F "#{session_name}\t#{session_created}\t#{session_attached}"`,
       { encoding: "utf-8", timeout: 5000, stdio: ["pipe", "pipe", "ignore"] },
     );
-    return output
-      .trim()
-      .split("\n")
-      .filter((l) => l.length > 0)
-      .map((line) => {
-        const [name, created, attached] = line.split("\t");
-        return { name, created: parseInt(created, 10), attached: attached !== "0" };
-      })
-      .filter((s) => s.name.startsWith(prefix));
+    return parseTmuxOutput(output, prefix);
   } catch {
     return [];
   }

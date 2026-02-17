@@ -1,15 +1,7 @@
 import { existsSync, readFileSync } from "node:fs";
-import { homedir } from "node:os";
 import { join } from "node:path";
 import type { HookStateFile, SessionState } from "./types.js";
-
-const STATE_DIR = join(
-  homedir(),
-  ".local",
-  "state",
-  "claude-overview",
-  "sessions",
-);
+import { STATE_DIR } from "./paths.js";
 
 /** Get the state file path for a worktree key. */
 export function stateFilePath(worktreeKey: string): string {

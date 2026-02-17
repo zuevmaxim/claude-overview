@@ -33,7 +33,6 @@ export function SessionRow({ session, selected }: Props) {
         </Text>
       )}
       <Text color={color}> [{stateLabel}]</Text>
-      {!session.alive && <Text color="red"> (dead)</Text>}
     </Box>
   );
 }

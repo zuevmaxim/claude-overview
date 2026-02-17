@@ -1,16 +1,7 @@
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { homedir } from "node:os";
 import { join } from "node:path";
-
-const STATE_DIR = join(
-  homedir(),
-  ".local",
-  "state",
-  "claude-overview",
-  "sessions",
-);
-
-const HOOKS_DIR = join(homedir(), ".local", "share", "claude-overview", "hooks");
+import { STATE_DIR, HOOKS_DIR } from "./lib/paths.js";
 
 const SETTINGS_PATH = join(homedir(), ".claude", "settings.json");
 

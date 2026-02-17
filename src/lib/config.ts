@@ -43,6 +43,39 @@ function findConfigFile(): string | null {
   return null;
 }
 
+/** Parse `git worktree list --porcelain` output into structured data. */
+export function parseWorktreePorcelain(output: string): WorktreeInfo[] {
+  const worktrees: WorktreeInfo[] = [];
+  let current: Partial<WorktreeInfo> = {};
+
+  for (const line of output.split("\n")) {
+    if (line.startsWith("worktree ")) {
+      if (current.path) {
+        worktrees.push({
+          path: current.path,
+          label: current.label ?? current.path.split("/").pop()!,
+          branch: current.branch,
+        });
+      }
+      current = { path: line.slice("worktree ".length) };
+    } else if (line.startsWith("branch ")) {
+      const branch = line.slice("branch ".length);
+      current.branch = branch.replace("refs/heads/", "");
+      current.label = current.branch;
+    }
+  }
+  // Push last entry
+  if (current.path) {
+    worktrees.push({
+      path: current.path,
+      label: current.label ?? current.path.split("/").pop()!,
+      branch: current.branch,
+    });
+  }
+
+  return worktrees;
+}
+
 function discoverWorktrees(repoPath: string): WorktreeInfo[] {
   try {
     const output = execSync("git worktree list --porcelain", {
@@ -51,36 +84,7 @@ function discoverWorktrees(repoPath: string): WorktreeInfo[] {
       timeout: 5000,
       stdio: ["pipe", "pipe", "ignore"],
     });
-
-    const worktrees: WorktreeInfo[] = [];
-    let current: Partial<WorktreeInfo> = {};
-
-    for (const line of output.split("\n")) {
-      if (line.startsWith("worktree ")) {
-        if (current.path) {
-          worktrees.push({
-            path: current.path,
-            label: current.label ?? current.path.split("/").pop()!,
-            branch: current.branch,
-          });
-        }
-        current = { path: line.slice("worktree ".length) };
-      } else if (line.startsWith("branch ")) {
-        const branch = line.slice("branch ".length);
-        current.branch = branch.replace("refs/heads/", "");
-        current.label = current.branch;
-      }
-    }
-    // Push last entry
-    if (current.path) {
-      worktrees.push({
-        path: current.path,
-        label: current.label ?? current.path.split("/").pop()!,
-        branch: current.branch,
-      });
-    }
-
-    return worktrees;
+    return parseWorktreePorcelain(output);
   } catch {
     return [];
   }
