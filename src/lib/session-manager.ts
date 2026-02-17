@@ -59,12 +59,13 @@ export class SessionManager {
     return sessions;
   }
 
-  /** Create a new Claude session in the given worktree. */
+  /** Create a new Claude session in the given worktree and attach to it. */
   createSession(wt: WorktreeInfo): string {
     const name = sessionName(this.config.tmuxPrefix, wt);
     const dir = basename(wt.path);
     const title = wt.branch ? `${wt.branch} — ${dir}` : dir;
     tmux.createSession(name, wt.path, this.config.claudeBinary, title);
+    openTerminalAttached(name);
     return name;
   }
 
