@@ -5,9 +5,11 @@ import type { Config, SessionInfo, WorktreeInfo } from "./lib/types.js";
 import { useSessions } from "./hooks/use-sessions.js";
 import { SessionList } from "./components/SessionList.js";
 import { WorktreeSelector } from "./components/WorktreeSelector.js";
+import { BranchCheckPrompt } from "./components/BranchCheckPrompt.js";
 import { StatusBar } from "./components/StatusBar.js";
+import { getCurrentBranch, getDefaultBranch } from "./lib/git.js";
 
-type View = "list" | "worktree-picker" | "commit-input";
+type View = "list" | "worktree-picker" | "commit-input" | "branch-check";
 
 interface Props {
   config: Config;
@@ -33,6 +35,8 @@ export function App({ config }: Props) {
   const [pendingDelete, setPendingDelete] = useState<SessionInfo | null>(null);
   const [pendingDeleteDirty, setPendingDeleteDirty] = useState(false);
   const [commitTarget, setCommitTarget] = useState<SessionInfo | null>(null);
+  const [pendingWorktree, setPendingWorktree] = useState<WorktreeInfo | null>(null);
+  const [branchInfo, setBranchInfo] = useState<{ current: string; default: string } | null>(null);
 
   const showMessage = useCallback((msg: string) => {
     setMessage(msg);
@@ -56,6 +60,9 @@ export function App({ config }: Props) {
         return;
       }
 
+      if (view === "branch-check") {
+        return;
+      }
       if (view !== "list") {
         if (key.escape || input === "q") {
           setView("list");
@@ -139,12 +146,39 @@ export function App({ config }: Props) {
 
   const handleWorktreeSelect = useCallback(
     (wt: WorktreeInfo) => {
-      createSession(wt);
-      setView("list");
-      showMessage(`Started session in ${wt.label}`);
+      const current = getCurrentBranch(wt.path);
+      const defaultBr = getDefaultBranch(wt.path);
+
+      if (!current || !defaultBr || current === defaultBr) {
+        createSession(wt);
+        setView("list");
+        showMessage(`Started session in ${wt.label}`);
+        return;
+      }
+
+      setPendingWorktree(wt);
+      setBranchInfo({ current, default: defaultBr });
+      setView("branch-check");
     },
     [createSession, showMessage],
   );
+
+  const handleBranchCheckDone = useCallback(
+    (updatedWorktree: WorktreeInfo) => {
+      createSession(updatedWorktree);
+      setPendingWorktree(null);
+      setBranchInfo(null);
+      setView("list");
+      showMessage(`Started session in ${updatedWorktree.label}`);
+    },
+    [createSession, showMessage],
+  );
+
+  const handleBranchCheckCancel = useCallback(() => {
+    setPendingWorktree(null);
+    setBranchInfo(null);
+    setView("list");
+  }, []);
 
   const waitingCount = sessions.filter((s) => s.state === "waiting").length;
 
@@ -201,13 +235,21 @@ export function App({ config }: Props) {
       {/* Main content */}
       {view === "list" || view === "commit-input" ? (
         <SessionList sessions={sessions} selectedIndex={selectedIndex} />
-      ) : (
+      ) : view === "worktree-picker" ? (
         <WorktreeSelector
           worktrees={availableWorktrees()}
           onSelect={handleWorktreeSelect}
           onCancel={() => setView("list")}
         />
-      )}
+      ) : pendingWorktree && branchInfo ? (
+        <BranchCheckPrompt
+          worktree={pendingWorktree}
+          currentBranch={branchInfo.current}
+          defaultBranch={branchInfo.default}
+          onDone={handleBranchCheckDone}
+          onCancel={handleBranchCheckCancel}
+        />
+      ) : null}
 
       {/* Status bar */}
       <StatusBar sessionCount={sessions.length} waitingCount={waitingCount} />

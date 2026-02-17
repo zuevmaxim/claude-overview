@@ -6,6 +6,7 @@ import * as tmux from "./tmux.js";
 import { detectSessionState, stateFilePath } from "./state-detector.js";
 import { openTerminalAttached } from "./terminal.js";
 import { worktreeKey } from "./paths.js";
+import { getCurrentBranch } from "./git.js";
 
 function sessionName(prefix: string, wt: WorktreeInfo): string {
   return `${prefix}${worktreeKey(wt)}`;
@@ -31,10 +32,16 @@ export class SessionManager {
 
       const { state, stateUpdatedAt } = detectSessionState(suffix);
 
+      // Re-read current branch so the display stays up-to-date after checkout
+      const liveBranch = getCurrentBranch(wt.path);
+      const worktree: WorktreeInfo = liveBranch
+        ? { ...wt, branch: liveBranch, label: liveBranch }
+        : wt;
+
       seenNames.add(ts.name);
       sessions.push({
         name: ts.name,
-        worktree: wt,
+        worktree,
         state,
         stateUpdatedAt,
         alive: true,
