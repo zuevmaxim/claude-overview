@@ -48,6 +48,10 @@ export function createSession(
     "-c", cwd,
     "bash", "-c", shellCmd,
   ], { timeout: 10000, stdio: "ignore" });
+  execFileSync("tmux", ["set", "-t", sessionName, "mouse", "on"], {
+    timeout: 5000,
+    stdio: "ignore",
+  });
 }
 
 /** Kill a tmux session by name. */
