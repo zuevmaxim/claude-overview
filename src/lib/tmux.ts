@@ -1,0 +1,81 @@
+import { execSync, execFileSync } from "node:child_process";
+
+export interface TmuxSessionInfo {
+  name: string;
+  created: number;
+  attached: boolean;
+}
+
+/** List all tmux sessions matching a prefix. */
+export function listSessions(prefix: string): TmuxSessionInfo[] {
+  try {
+    const output = execSync(
+      `tmux list-sessions -F "#{session_name}\t#{session_created}\t#{session_attached}"`,
+      { encoding: "utf-8", timeout: 5000, stdio: ["pipe", "pipe", "ignore"] },
+    );
+    return output
+      .trim()
+      .split("\n")
+      .filter((l) => l.length > 0)
+      .map((line) => {
+        const [name, created, attached] = line.split("\t");
+        return { name, created: parseInt(created, 10), attached: attached !== "0" };
+      })
+      .filter((s) => s.name.startsWith(prefix));
+  } catch {
+    return [];
+  }
+}
+
+/** Create a new tmux session running claude in the given directory. */
+export function createSession(
+  sessionName: string,
+  cwd: string,
+  claudeBinary: string,
+): void {
+  execFileSync("tmux", [
+    "new-session",
+    "-d",
+    "-s", sessionName,
+    "-c", cwd,
+    claudeBinary,
+  ], { timeout: 10000 });
+}
+
+/** Kill a tmux session by name. */
+export function killSession(sessionName: string): void {
+  try {
+    execFileSync("tmux", ["kill-session", "-t", sessionName], {
+      timeout: 5000, stdio: "ignore",
+    });
+  } catch {
+    // Session might already be dead
+  }
+}
+
+/** Capture the last N lines from a tmux pane. */
+export function capturePaneLines(
+  sessionName: string,
+  lines: number = 5,
+): string[] {
+  try {
+    const output = execSync(
+      `tmux capture-pane -t ${sessionName} -p -S -${lines}`,
+      { encoding: "utf-8", timeout: 5000, stdio: ["pipe", "pipe", "ignore"] },
+    );
+    return output.split("\n");
+  } catch {
+    return [];
+  }
+}
+
+/** Check if tmux server is running. */
+export function isTmuxAvailable(): boolean {
+  try {
+    execSync("tmux has-session", { timeout: 3000, stdio: "ignore" });
+    return true;
+  } catch {
+    // tmux server may not be running yet, that's fine
+    return false;
+  }
+}

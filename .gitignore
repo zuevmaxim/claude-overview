@@ -1,1 +1,7 @@
-./clade
+node_modules/
+dist/
+claude-overview.config.json
+.claude-overview.json
+*.tsbuildinfo
+.claude
+.idea
