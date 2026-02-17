@@ -9,7 +9,8 @@
   "scripts": {
     "build": "tsc",
     "start": "node dist/cli.js",
-    "dev": "tsc --watch"
+    "dev": "tsc --watch",
+    "setup": "npm install && npm run build && npm link"
   },
   "dependencies": {
     "@inkjs/ui": "^2.0.0",
