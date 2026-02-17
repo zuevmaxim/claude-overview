@@ -32,13 +32,16 @@ export function createSession(
   sessionName: string,
   cwd: string,
   claudeBinary: string,
+  title: string,
 ): void {
+  // Set terminal title via printf escape, then exec claude
+  const shellCmd = `printf '\\033]2;${title.replace(/'/g, "'\\''")}\\033\\\\' && exec ${claudeBinary}`;
   execFileSync("tmux", [
     "new-session",
     "-d",
     "-s", sessionName,
     "-c", cwd,
-    claudeBinary,
+    "bash", "-c", shellCmd,
   ], { timeout: 10000 });
 }
 
