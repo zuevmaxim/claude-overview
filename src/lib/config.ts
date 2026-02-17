@@ -49,6 +49,7 @@ function discoverWorktrees(repoPath: string): WorktreeInfo[] {
       cwd: repoPath,
       encoding: "utf-8",
       timeout: 5000,
+      stdio: ["pipe", "pipe", "ignore"],
     });
 
     const worktrees: WorktreeInfo[] = [];

@@ -24,7 +24,9 @@ export class SessionManager {
     const sessions: SessionInfo[] = [];
 
     // For each tmux session matching our prefix, find the corresponding worktree
+    const seenNames = new Set<string>();
     for (const ts of tmuxSessions) {
+      if (seenNames.has(ts.name)) continue;
       const suffix = ts.name.slice(this.config.tmuxPrefix.length);
       const wt = this.config.worktrees.find((w) => worktreeKey(w) === suffix);
 
@@ -32,6 +34,7 @@ export class SessionManager {
 
       const { state, stateUpdatedAt } = detectSessionState(suffix);
 
+      seenNames.add(ts.name);
       sessions.push({
         name: ts.name,
         worktree: wt,

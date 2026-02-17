@@ -42,7 +42,7 @@ export function createSession(
     "-s", sessionName,
     "-c", cwd,
     "bash", "-c", shellCmd,
-  ], { timeout: 10000 });
+  ], { timeout: 10000, stdio: "ignore" });
 }
 
 /** Kill a tmux session by name. */
