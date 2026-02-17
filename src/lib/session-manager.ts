@@ -28,7 +28,7 @@ export class SessionManager {
 
       if (!wt) continue; // tmux session doesn't match any known worktree
 
-      const { state, stateUpdatedAt } = detectSessionState(suffix, ts.name);
+      const { state, stateUpdatedAt } = detectSessionState(suffix);
 
       sessions.push({
         name: ts.name,
@@ -44,10 +44,7 @@ export class SessionManager {
       const name = sessionName(this.config.tmuxPrefix, wt);
       if (tmuxNames.has(name)) continue;
 
-      const { state, stateUpdatedAt } = detectSessionState(
-        worktreeKey(wt),
-        name,
-      );
+      const { state, stateUpdatedAt } = detectSessionState(worktreeKey(wt));
       if (state === "ended") {
         sessions.push({
           name,

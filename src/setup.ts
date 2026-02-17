@@ -75,7 +75,7 @@ export function runSetup(): void {
     { event: "Stop", state: "waiting", filename: "on-stop.sh", matcher: "" },
     { event: "Notification", state: "waiting", filename: "on-notification.sh", matcher: "" },
     { event: "UserPromptSubmit", state: "running", filename: "on-prompt-submit.sh", matcher: "" },
-    { event: "SessionStart", state: "running", filename: "on-session-start.sh", matcher: "" },
+    { event: "SessionStart", state: "waiting", filename: "on-session-start.sh", matcher: "" },
     { event: "SessionEnd", state: "ended", filename: "on-session-end.sh", matcher: "" },
   ];
 

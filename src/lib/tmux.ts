@@ -53,22 +53,6 @@ export function killSession(sessionName: string): void {
   }
 }
 
-/** Capture the last N lines from a tmux pane. */
-export function capturePaneLines(
-  sessionName: string,
-  lines: number = 5,
-): string[] {
-  try {
-    const output = execSync(
-      `tmux capture-pane -t ${sessionName} -p -S -${lines}`,
-      { encoding: "utf-8", timeout: 5000, stdio: ["pipe", "pipe", "ignore"] },
-    );
-    return output.split("\n");
-  } catch {
-    return [];
-  }
-}
-
 /** Check if tmux server is running. */
 export function isTmuxAvailable(): boolean {
   try {
