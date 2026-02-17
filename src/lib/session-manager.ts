@@ -41,20 +41,15 @@ export class SessionManager {
       });
     }
 
-    // Also check for worktrees that have state files but no live tmux session
+    // Clean up stale state files for worktrees whose tmux session is gone
     for (const wt of this.config.worktrees) {
       const name = sessionName(this.config.tmuxPrefix, wt);
       if (tmuxNames.has(name)) continue;
 
-      const { state, stateUpdatedAt } = detectSessionState(worktreeKey(wt));
+      const key = worktreeKey(wt);
+      const { state } = detectSessionState(key);
       if (state === "ended") {
-        sessions.push({
-          name,
-          worktree: wt,
-          state: "ended",
-          stateUpdatedAt,
-          alive: false,
-        });
+        try { unlinkSync(stateFilePath(key)); } catch { /* ignore */ }
       }
     }
 

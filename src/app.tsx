@@ -1,6 +1,6 @@
 import React, { useState, useCallback } from "react";
 import { Box, Text, useInput, useApp } from "ink";
-import type { Config, WorktreeInfo } from "./lib/types.js";
+import type { Config, SessionInfo, WorktreeInfo } from "./lib/types.js";
 import { useSessions } from "./hooks/use-sessions.js";
 import { SessionList } from "./components/SessionList.js";
 import { WorktreeSelector } from "./components/WorktreeSelector.js";
@@ -27,6 +27,7 @@ export function App({ config }: Props) {
   const [selectedIndex, setSelectedIndex] = useState(0);
   const [view, setView] = useState<View>("list");
   const [message, setMessage] = useState<string | null>(null);
+  const [pendingDelete, setPendingDelete] = useState<SessionInfo | null>(null);
 
   const showMessage = useCallback((msg: string) => {
     setMessage(msg);
@@ -35,6 +36,19 @@ export function App({ config }: Props) {
 
   useInput(
     (input, key) => {
+      // Handle delete confirmation
+      if (pendingDelete) {
+        if (input === "y") {
+          destroySession(pendingDelete);
+          showMessage(`Destroyed session ${pendingDelete.worktree.label}`);
+          setSelectedIndex((i) => Math.max(0, Math.min(i, sessions.length - 2)));
+          setPendingDelete(null);
+        } else if (input === "n" || key.escape) {
+          setPendingDelete(null);
+        }
+        return;
+      }
+
       if (view !== "list") {
         if (key.escape || input === "q") {
           setView("list");
@@ -61,9 +75,7 @@ export function App({ config }: Props) {
       } else if (input === "d") {
         const session = sessions[selectedIndex];
         if (session) {
-          destroySession(session);
-          showMessage(`Destroyed session ${session.worktree.label}`);
-          setSelectedIndex((i) => Math.max(0, Math.min(i, sessions.length - 2)));
+          setPendingDelete(session);
         }
       } else if (input === "r") {
         refresh();
@@ -103,8 +115,15 @@ export function App({ config }: Props) {
         <Text dimColor> — Multi-session Dashboard</Text>
       </Box>
 
+      {/* Delete confirmation */}
+      {pendingDelete && (
+        <Box paddingX={1}>
+          <Text color="yellow">Delete session {pendingDelete.worktree.label}? (y/n)</Text>
+        </Box>
+      )}
+
       {/* Message */}
-      {message && (
+      {message && !pendingDelete && (
         <Box paddingX={1}>
           <Text color="green">{message}</Text>
         </Box>
