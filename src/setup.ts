@@ -16,8 +16,8 @@ const SETTINGS_PATH = join(homedir(), ".claude", "settings.json");
 
 /**
  * Hook script template.
- * Receives session info via env vars and writes state to a JSON file.
- * The worktree key is derived from the CWD.
+ * Claude Code pipes a JSON object to stdin with session_id, cwd, etc.
+ * We read cwd from stdin and derive the worktree key from it.
  */
 function makeHookScript(state: string, event: string): string {
   return `#!/bin/bash
@@ -25,8 +25,17 @@ function makeHookScript(state: string, event: string): string {
 STATE_DIR="${STATE_DIR}"
 mkdir -p "$STATE_DIR"
 
-# Derive worktree key from CWD
-CWD="$(pwd)"
+# Read hook input JSON from stdin
+INPUT="$(cat)"
+
+# Extract cwd and session_id from the JSON input
+CWD="$(echo "$INPUT" | grep -o '"cwd":"[^"]*"' | head -1 | cut -d'"' -f4)"
+SESSION_ID="$(echo "$INPUT" | grep -o '"session_id":"[^"]*"' | head -1 | cut -d'"' -f4)"
+
+if [ -z "$CWD" ]; then
+  CWD="$(pwd)"
+fi
+
 KEY="$(basename "$CWD" | tr -c 'a-zA-Z0-9_-' '_')"
 
 cat > "$STATE_DIR/$KEY.json" <<EOJSON
@@ -34,19 +43,23 @@ cat > "$STATE_DIR/$KEY.json" <<EOJSON
   "state": "${state}",
   "timestamp": $(date +%s)000,
   "event": "${event}",
-  "sessionId": "\${SESSION_ID:-unknown}"
+  "sessionId": "$SESSION_ID"
 }
 EOJSON
 `;
 }
 
+interface CommandHook {
+  type: "command";
+  command: string;
+}
+
 interface HookEntry {
   matcher: string;
-  hooks: Array<{
-    type: "command";
-    command: string;
-  }>;
+  hooks: CommandHook[];
 }
+
+type HooksMap = Record<string, HookEntry[]>;
 
 export function runSetup(): void {
   console.log("Setting up Claude Overview hooks...\n");
@@ -58,15 +71,15 @@ export function runSetup(): void {
   // 2. Create hook scripts
   mkdirSync(HOOKS_DIR, { recursive: true });
 
-  const hooks: Array<{ event: string; state: string; filename: string }> = [
-    { event: "Stop", state: "waiting", filename: "on-stop.sh" },
-    { event: "Notification", state: "waiting", filename: "on-notification.sh" },
-    { event: "UserPromptSubmit", state: "running", filename: "on-prompt-submit.sh" },
-    { event: "SessionStart", state: "running", filename: "on-session-start.sh" },
-    { event: "SessionEnd", state: "ended", filename: "on-session-end.sh" },
+  const hookDefs: Array<{ event: string; state: string; filename: string; matcher: string }> = [
+    { event: "Stop", state: "waiting", filename: "on-stop.sh", matcher: "" },
+    { event: "Notification", state: "waiting", filename: "on-notification.sh", matcher: "" },
+    { event: "UserPromptSubmit", state: "running", filename: "on-prompt-submit.sh", matcher: "" },
+    { event: "SessionStart", state: "running", filename: "on-session-start.sh", matcher: "" },
+    { event: "SessionEnd", state: "ended", filename: "on-session-end.sh", matcher: "" },
   ];
 
-  for (const h of hooks) {
+  for (const h of hookDefs) {
     const scriptPath = join(HOOKS_DIR, h.filename);
     writeFileSync(scriptPath, makeHookScript(h.state, h.event), { mode: 0o755 });
     console.log(`  Created hook script: ${scriptPath}`);
@@ -85,36 +98,23 @@ export function runSetup(): void {
     mkdirSync(claudeDir, { recursive: true });
   }
 
-  // Build hook entries
-  const hookEntries: HookEntry[] = hooks.map((h) => ({
-    matcher: h.event,
-    hooks: [
-      {
-        type: "command" as const,
-        command: join(HOOKS_DIR, h.filename),
-      },
-    ],
-  }));
+  const existingHooks = (settings["hooks"] ?? {}) as HooksMap;
 
-  // Merge with existing hooks
-  const existingHooks = (settings["hooks"] as HookEntry[] | undefined) ?? [];
-  const existingMatchers = new Set(existingHooks.map((h) => h.matcher));
+  for (const h of hookDefs) {
+    const scriptPath = join(HOOKS_DIR, h.filename);
+    const newHook: CommandHook = { type: "command", command: scriptPath };
 
-  for (const entry of hookEntries) {
-    if (existingMatchers.has(entry.matcher)) {
-      // Update existing entry
-      const idx = existingHooks.findIndex((h) => h.matcher === entry.matcher);
-      const existing = existingHooks[idx];
-      // Check if our hook command already exists
-      const ourCommand = entry.hooks[0].command;
-      const alreadyHas = existing.hooks.some(
-        (h) => h.type === "command" && h.command === ourCommand,
-      );
-      if (!alreadyHas) {
-        existing.hooks.push(...entry.hooks);
-      }
+    if (!existingHooks[h.event]) {
+      // No entries for this event yet
+      existingHooks[h.event] = [{ matcher: h.matcher, hooks: [newHook] }];
     } else {
-      existingHooks.push(entry);
+      // Check if our script is already registered
+      const alreadyRegistered = existingHooks[h.event].some((entry) =>
+        entry.hooks.some((hook) => hook.type === "command" && hook.command === scriptPath),
+      );
+      if (!alreadyRegistered) {
+        existingHooks[h.event].push({ matcher: h.matcher, hooks: [newHook] });
+      }
     }
   }
 

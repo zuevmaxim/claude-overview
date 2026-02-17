@@ -31,7 +31,7 @@ const cli = meow(
   },
 );
 
-const command = cli.input[0];
+const command = cli.input[0] ?? process.argv.find((a) => a === "setup");
 
 if (command === "setup") {
   runSetup();
