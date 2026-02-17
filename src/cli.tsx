@@ -32,4 +32,5 @@ const cli = meow(
 
 ensureSetup();
 const config = loadConfig(cli.flags.config);
+console.clear();
 render(<App config={config} />);
