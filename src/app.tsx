@@ -1,12 +1,13 @@
 import React, { useState, useCallback } from "react";
 import { Box, Text, useInput, useApp } from "ink";
+import { TextInput } from "@inkjs/ui";
 import type { Config, SessionInfo, WorktreeInfo } from "./lib/types.js";
 import { useSessions } from "./hooks/use-sessions.js";
 import { SessionList } from "./components/SessionList.js";
 import { WorktreeSelector } from "./components/WorktreeSelector.js";
 import { StatusBar } from "./components/StatusBar.js";
 
-type View = "list" | "worktree-picker";
+type View = "list" | "worktree-picker" | "commit-input";
 
 interface Props {
   config: Config;
@@ -21,6 +22,8 @@ export function App({ config }: Props) {
     destroySession,
     attachSession,
     availableWorktrees,
+    hasUncommittedChanges,
+    commitAll,
     refresh,
   } = useSessions(config);
 
@@ -28,6 +31,8 @@ export function App({ config }: Props) {
   const [view, setView] = useState<View>("list");
   const [message, setMessage] = useState<string | null>(null);
   const [pendingDelete, setPendingDelete] = useState<SessionInfo | null>(null);
+  const [pendingDeleteDirty, setPendingDeleteDirty] = useState(false);
+  const [commitTarget, setCommitTarget] = useState<SessionInfo | null>(null);
 
   const showMessage = useCallback((msg: string) => {
     setMessage(msg);
@@ -43,8 +48,10 @@ export function App({ config }: Props) {
           showMessage(`Destroyed session ${pendingDelete.worktree.label}`);
           setSelectedIndex((i) => Math.max(0, Math.min(i, sessions.length - 2)));
           setPendingDelete(null);
+          setPendingDeleteDirty(false);
         } else if (input === "n" || key.escape) {
           setPendingDelete(null);
+          setPendingDeleteDirty(false);
         }
         return;
       }
@@ -72,10 +79,21 @@ export function App({ config }: Props) {
         }
       } else if (input === "n") {
         setView("worktree-picker");
+      } else if (input === "c") {
+        const session = sessions[selectedIndex];
+        if (session) {
+          if (!hasUncommittedChanges(session.worktree)) {
+            showMessage("No uncommitted changes");
+          } else {
+            setCommitTarget(session);
+            setView("commit-input");
+          }
+        }
       } else if (input === "d") {
         const session = sessions[selectedIndex];
         if (session) {
           setPendingDelete(session);
+          setPendingDeleteDirty(hasUncommittedChanges(session.worktree));
         }
       } else if (input === "r") {
         refresh();
@@ -84,6 +102,39 @@ export function App({ config }: Props) {
         exit();
       }
     },
+    { isActive: view !== "commit-input" },
+  );
+
+  // Handle Escape during commit input
+  useInput(
+    (_input, key) => {
+      if (key.escape) {
+        setCommitTarget(null);
+        setView("list");
+      }
+    },
+    { isActive: view === "commit-input" },
+  );
+
+  const handleCommitSubmit = useCallback(
+    (message: string) => {
+      const trimmed = message.trim();
+      if (!trimmed || !commitTarget) {
+        showMessage("Commit cancelled");
+        setCommitTarget(null);
+        setView("list");
+        return;
+      }
+      const result = commitAll(commitTarget.worktree, trimmed);
+      if (result.success) {
+        showMessage(`Committed in ${commitTarget.worktree.label}`);
+      } else {
+        showMessage(`Commit failed: ${result.error}`);
+      }
+      setCommitTarget(null);
+      setView("list");
+    },
+    [commitTarget, commitAll, showMessage],
   );
 
   const handleWorktreeSelect = useCallback(
@@ -117,8 +168,11 @@ export function App({ config }: Props) {
 
       {/* Delete confirmation */}
       {pendingDelete && (
-        <Box paddingX={1}>
+        <Box paddingX={1} flexDirection="column">
           <Text color="yellow">Delete session {pendingDelete.worktree.label}? (y/n)</Text>
+          {pendingDeleteDirty && (
+            <Text color="red">  Worktree has uncommitted changes. Press n then c to commit first.</Text>
+          )}
         </Box>
       )}
 
@@ -129,8 +183,23 @@ export function App({ config }: Props) {
         </Box>
       )}
 
+      {/* Commit input */}
+      {view === "commit-input" && commitTarget && (
+        <Box paddingX={1} flexDirection="column">
+          <Text color="cyan">Commit changes in {commitTarget.worktree.label}:</Text>
+          <Box>
+            <Text dimColor>{"› "}</Text>
+            <TextInput
+              placeholder="Enter commit message…"
+              onSubmit={handleCommitSubmit}
+            />
+          </Box>
+          <Text dimColor>Enter to commit · Escape to cancel</Text>
+        </Box>
+      )}
+
       {/* Main content */}
-      {view === "list" ? (
+      {view === "list" || view === "commit-input" ? (
         <SessionList sessions={sessions} selectedIndex={selectedIndex} />
       ) : (
         <WorktreeSelector

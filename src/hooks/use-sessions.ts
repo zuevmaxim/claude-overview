@@ -9,6 +9,11 @@ export interface UseSessionsResult {
   destroySession: (session: SessionInfo) => void;
   attachSession: (session: SessionInfo) => void;
   availableWorktrees: () => WorktreeInfo[];
+  hasUncommittedChanges: (wt: WorktreeInfo) => boolean;
+  commitAll: (
+    wt: WorktreeInfo,
+    message: string,
+  ) => { success: boolean; error?: string };
   refresh: () => void;
 }
 
@@ -55,6 +60,17 @@ export function useSessions(config: Config): UseSessionsResult {
     return managerRef.current.availableWorktrees(sessions);
   }, [sessions]);
 
+  const hasUncommittedChanges = useCallback((wt: WorktreeInfo) => {
+    return managerRef.current.hasUncommittedChanges(wt);
+  }, []);
+
+  const commitAll = useCallback(
+    (wt: WorktreeInfo, message: string) => {
+      return managerRef.current.commitAll(wt, message);
+    },
+    [],
+  );
+
   return {
     sessions,
     loading,
@@ -62,6 +78,8 @@ export function useSessions(config: Config): UseSessionsResult {
     destroySession,
     attachSession,
     availableWorktrees,
+    hasUncommittedChanges,
+    commitAll,
     refresh: doRefresh,
   };
 }

@@ -1,3 +1,4 @@
+import { execFileSync } from "node:child_process";
 import { unlinkSync } from "node:fs";
 import { basename } from "node:path";
 import type { Config, SessionInfo, WorktreeInfo } from "./types.js";
@@ -79,6 +80,41 @@ export class SessionManager {
   /** Attach to a session in a new Terminal.app window. */
   attachSession(session: SessionInfo): void {
     openTerminalAttached(session.name);
+  }
+
+  /** Check if a worktree has uncommitted changes. */
+  hasUncommittedChanges(wt: WorktreeInfo): boolean {
+    try {
+      const output = execFileSync("git", ["status", "--porcelain"], {
+        cwd: wt.path,
+        stdio: "pipe",
+        encoding: "utf-8",
+      });
+      return output.trim().length > 0;
+    } catch {
+      return false;
+    }
+  }
+
+  /** Stage all changes and commit with the given message. */
+  commitAll(
+    wt: WorktreeInfo,
+    message: string,
+  ): { success: boolean; error?: string } {
+    try {
+      execFileSync("git", ["add", "-A"], {
+        cwd: wt.path,
+        stdio: "pipe",
+      });
+      execFileSync("git", ["commit", "-m", message], {
+        cwd: wt.path,
+        stdio: "pipe",
+      });
+      return { success: true };
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : String(err);
+      return { success: false, error: msg };
+    }
   }
 
   /** Get worktrees that don't have a running session. */
