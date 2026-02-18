@@ -64,14 +64,3 @@ export function killSession(sessionName: string): void {
     // Session might already be dead
   }
 }
-
-/** Check if tmux server is running. */
-export function isTmuxAvailable(): boolean {
-  try {
-    execSync("tmux has-session", { timeout: 3000, stdio: "ignore" });
-    return true;
-  } catch {
-    // tmux server may not be running yet, that's fine
-    return false;
-  }
-}

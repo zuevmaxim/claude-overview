@@ -5,7 +5,7 @@ import { SessionManager } from "../lib/session-manager.js";
 export interface UseSessionsResult {
   sessions: SessionInfo[];
   loading: boolean;
-  createSession: (wt: WorktreeInfo) => void;
+  createSession: (wt: WorktreeInfo) => { success: boolean; error?: string };
   destroySession: (session: SessionInfo) => void;
   attachSession: (session: SessionInfo) => void;
   openPlanFile: (session: SessionInfo) => boolean;
@@ -36,10 +36,20 @@ export function useSessions(config: Config): UseSessionsResult {
   }, [config.pollIntervalMs, doRefresh]);
 
   const createSession = useCallback(
-    (wt: WorktreeInfo) => {
-      managerRef.current.createSession(wt);
-      // Immediate refresh to pick up the new session
-      setTimeout(doRefresh, 500);
+    (wt: WorktreeInfo): { success: boolean; error?: string } => {
+      try {
+        managerRef.current.createSession(wt);
+        setTimeout(doRefresh, 500);
+        return { success: true };
+      } catch (err) {
+        const msg =
+          err instanceof Error && (err as any).code === "ENOENT"
+            ? "tmux not found. Install with: brew install tmux"
+            : err instanceof Error
+              ? err.message
+              : String(err);
+        return { success: false, error: msg };
+      }
     },
     [doRefresh],
   );

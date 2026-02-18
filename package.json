@@ -12,7 +12,8 @@
     "dev": "tsc --watch",
     "test": "vitest run",
     "test:watch": "vitest",
-    "setup": "npm install && npm run build && npm link"
+    "install:deps": "command -v tmux >/dev/null 2>&1 || brew install tmux",
+    "setup": "npm run install:deps && npm install && npm run build && npm link"
   },
   "dependencies": {
     "@inkjs/ui": "^2.0.0",

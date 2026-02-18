@@ -169,9 +169,13 @@ export function App({ config }: Props) {
       const defaultBr = getDefaultBranch(wt.path);
 
       if (!current || !defaultBr || current === defaultBr) {
-        createSession(wt);
+        const result = createSession(wt);
         setView("list");
-        showMessage(`Started session in ${wt.label}`);
+        if (result.success) {
+          showMessage(`Started session in ${wt.label}`);
+        } else {
+          showMessage(result.error ?? "Failed to create session");
+        }
         return;
       }
 
@@ -184,11 +188,15 @@ export function App({ config }: Props) {
 
   const handleBranchCheckDone = useCallback(
     (updatedWorktree: WorktreeInfo) => {
-      createSession(updatedWorktree);
+      const result = createSession(updatedWorktree);
       setPendingWorktree(null);
       setBranchInfo(null);
       setView("list");
-      showMessage(`Started session in ${updatedWorktree.label}`);
+      if (result.success) {
+        showMessage(`Started session in ${updatedWorktree.label}`);
+      } else {
+        showMessage(result.error ?? "Failed to create session");
+      }
     },
     [createSession, showMessage],
   );
