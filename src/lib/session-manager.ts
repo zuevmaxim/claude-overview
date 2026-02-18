@@ -48,7 +48,7 @@ export class SessionManager {
       // Re-read current branch so the display stays up-to-date after checkout
       const liveBranch = getCurrentBranch(wt.path);
       const worktree: WorktreeInfo = liveBranch
-        ? { ...wt, branch: liveBranch, label: liveBranch }
+        ? { ...wt, branch: liveBranch }
         : wt;
 
       seenNames.add(ts.name);

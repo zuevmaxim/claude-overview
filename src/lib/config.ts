@@ -61,7 +61,6 @@ export function parseWorktreePorcelain(output: string): WorktreeInfo[] {
     } else if (line.startsWith("branch ")) {
       const branch = line.slice("branch ".length);
       current.branch = branch.replace("refs/heads/", "");
-      current.label = current.branch;
     }
   }
   // Push last entry

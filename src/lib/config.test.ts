@@ -11,7 +11,7 @@ describe("parseWorktreePorcelain", () => {
     ].join("\n");
 
     expect(parseWorktreePorcelain(output)).toEqual([
-      { path: "/home/user/repo", label: "main", branch: "main" },
+      { path: "/home/user/repo", label: "repo", branch: "main" },
     ]);
   });
 
@@ -29,8 +29,8 @@ describe("parseWorktreePorcelain", () => {
 
     const result = parseWorktreePorcelain(output);
     expect(result).toHaveLength(2);
-    expect(result[0]).toEqual({ path: "/home/user/repo", label: "main", branch: "main" });
-    expect(result[1]).toEqual({ path: "/home/user/repo-feature", label: "feature/cool", branch: "feature/cool" });
+    expect(result[0]).toEqual({ path: "/home/user/repo", label: "repo", branch: "main" });
+    expect(result[1]).toEqual({ path: "/home/user/repo-feature", label: "repo-feature", branch: "feature/cool" });
   });
 
   it("handles detached HEAD (no branch)", () => {
