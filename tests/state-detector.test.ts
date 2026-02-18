@@ -6,7 +6,7 @@ vi.mock("node:fs", () => ({
 }));
 
 import { existsSync, readFileSync } from "node:fs";
-import { detectSessionState, stateFilePath } from "./state-detector.js";
+import { detectSessionState, stateFilePath } from "../src/lib/state-detector.js";
 
 const mockExists = vi.mocked(existsSync);
 const mockRead = vi.mocked(readFileSync);

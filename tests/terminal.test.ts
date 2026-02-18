@@ -4,7 +4,7 @@ vi.mock("node:child_process", () => ({
   execSync: vi.fn(),
 }));
 
-import { openTerminalAttached } from "./terminal.js";
+import { openTerminalAttached } from "../src/lib/terminal.js";
 
 describe("openTerminalAttached", () => {
   it("rejects session names with spaces", () => {

@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { worktreeKey } from "./paths.js";
+import { worktreeKey } from "../src/lib/paths.js";
 
 describe("worktreeKey", () => {
   it("returns basename for simple paths", () => {

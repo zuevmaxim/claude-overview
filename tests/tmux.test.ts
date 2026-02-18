@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { parseTmuxOutput } from "./tmux.js";
+import { parseTmuxOutput } from "../src/lib/tmux.js";
 
 describe("parseTmuxOutput", () => {
   it("parses standard multi-session output", () => {

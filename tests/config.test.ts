@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { parseWorktreePorcelain } from "./config.js";
+import { parseWorktreePorcelain } from "../src/lib/config.js";
 
 describe("parseWorktreePorcelain", () => {
   it("parses a single worktree", () => {

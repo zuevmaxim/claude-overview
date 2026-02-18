@@ -6,7 +6,7 @@ vi.mock("node:fs", () => ({
 }));
 
 import { existsSync, readFileSync } from "node:fs";
-import { detectPlanFile, clearPlanCache } from "./plan-detector.js";
+import { detectPlanFile, clearPlanCache } from "../src/lib/plan-detector.js";
 
 const mockExists = vi.mocked(existsSync);
 const mockRead = vi.mocked(readFileSync);

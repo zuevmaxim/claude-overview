@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { syncSettingsAllow } from "./settings-sync.js";
+import { syncSettingsAllow } from "../src/lib/settings-sync.js";
 
 vi.mock("node:fs", () => ({
   existsSync: vi.fn(),
