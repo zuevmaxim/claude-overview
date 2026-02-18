@@ -5,3 +5,4 @@ claude-overview.config.json
 *.tsbuildinfo
 .claude
 .idea
+*.DS_Store
