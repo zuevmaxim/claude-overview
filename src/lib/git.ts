@@ -82,3 +82,19 @@ export async function checkoutNewBranchAsync(
     return { success: false, error: message };
   }
 }
+
+export async function resetBranchHardAsync(
+  cwd: string,
+  baseBranch: string,
+): Promise<{ success: true } | { success: false; error: string }> {
+  try {
+    await execFileAsync("git", ["reset", "--hard", baseBranch], {
+      cwd,
+    });
+    return { success: true };
+  } catch (err: unknown) {
+    const message =
+      err instanceof Error ? err.message : "Unknown git error";
+    return { success: false, error: message };
+  }
+}
