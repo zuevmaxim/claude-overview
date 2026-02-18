@@ -22,6 +22,7 @@ export function StatusBar({ sessionCount, waitingCount }: Props) {
         <Text dimColor>Enter</Text> attach {"  "}
         <Text dimColor>n</Text> new {"  "}
         <Text dimColor>c</Text> commit {"  "}
+        <Text dimColor>i</Text> idea {"  "}
         <Text dimColor>d</Text> delete {"  "}
         <Text dimColor>r</Text> refresh {"  "}
         <Text dimColor>q</Text> quit

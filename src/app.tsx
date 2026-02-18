@@ -1,4 +1,5 @@
 import React, { useState, useCallback } from "react";
+import { spawn } from "node:child_process";
 import { Box, Text, useInput, useApp } from "ink";
 import { TextInput } from "@inkjs/ui";
 import type { Config, SessionInfo, WorktreeInfo } from "./lib/types.js";
@@ -95,6 +96,16 @@ export function App({ config }: Props) {
             setCommitTarget(session);
             setView("commit-input");
           }
+        }
+      } else if (input === "i") {
+        const session = sessions[selectedIndex];
+        if (session) {
+          const child = spawn("idea", [session.worktree.path], {
+            detached: true,
+            stdio: "ignore",
+          });
+          child.unref();
+          showMessage(`Opening ${session.worktree.label} in IDEA`);
         }
       } else if (input === "d") {
         const session = sessions[selectedIndex];
