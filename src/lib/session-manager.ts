@@ -33,18 +33,18 @@ export class SessionManager {
 
       if (!wt) continue; // tmux session doesn't match any known worktree
 
-      let { state, stateUpdatedAt } = detectSessionState(suffix);
+      let { state, stateUpdatedAt, sessionId } = detectSessionState(suffix);
 
       // Check for plan files in waiting sessions
       let planFile: string | undefined;
-      if (state === "waiting") {
-        const detected = detectPlanFile(ts.name);
+      if (state === "waiting" && sessionId) {
+        const detected = detectPlanFile(wt.path, sessionId);
         if (detected) {
           state = "planned";
           planFile = detected;
         }
-      } else {
-        clearPlanCache(ts.name);
+      } else if (sessionId) {
+        clearPlanCache(sessionId);
       }
 
       // Re-read current branch so the display stays up-to-date after checkout

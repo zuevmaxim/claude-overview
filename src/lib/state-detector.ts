@@ -13,14 +13,18 @@ export function stateFilePath(worktreeKey: string): string {
  */
 export function detectSessionState(
   worktreeKey: string,
-): { state: SessionState; stateUpdatedAt: number } {
+): { state: SessionState; stateUpdatedAt: number; sessionId?: string } {
   const path = stateFilePath(worktreeKey);
   if (!existsSync(path)) {
     return { state: "unknown", stateUpdatedAt: Date.now() };
   }
   try {
     const hookState = JSON.parse(readFileSync(path, "utf-8")) as HookStateFile;
-    return { state: hookState.state, stateUpdatedAt: hookState.timestamp };
+    return {
+      state: hookState.state,
+      stateUpdatedAt: hookState.timestamp,
+      sessionId: hookState.sessionId,
+    };
   } catch {
     return { state: "unknown", stateUpdatedAt: Date.now() };
   }

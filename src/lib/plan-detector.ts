@@ -1,66 +1,88 @@
-import { execFileSync } from "node:child_process";
-import { existsSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
+import { homedir } from "node:os";
+import { join } from "node:path";
 
 interface CacheEntry {
   planFile: string | null;
   cachedAt: number;
 }
 
-const CACHE_TTL_MS = 10_000;
+const CACHE_TTL_MS = 5_000;
 const cache = new Map<string, CacheEntry>();
 
-/** Strip ANSI escape sequences from a string. */
-function stripAnsi(text: string): string {
-  // eslint-disable-next-line no-control-regex
-  return text.replace(/\x1b\[[0-9;]*[a-zA-Z]/g, "");
-}
-
-/** Extract plan file paths from text. Exported for testing. */
-export function extractPlanFiles(text: string): string[] {
-  const cleaned = stripAnsi(text);
-  const regex = /\/[^\s]*\/\.claude\/plans\/[^\s]*\.md/g;
-  const matches = cleaned.match(regex) ?? [];
-  // Deduplicate while preserving order (last occurrence wins for uniqueness)
-  return [...new Set(matches)];
-}
-
 /**
- * Detect a plan file for a tmux session by scanning its scrollback.
- * Returns the path if found and the file exists on disk, null otherwise.
- * Results are cached for 10 seconds per session.
+ * Detect a plan file for a session by scanning its JSONL session log.
+ * Looks for Write tool-use entries where the file_path contains `/.claude/plans/` and ends with `.md`.
+ * Returns the last matching path that exists on disk, or null.
  */
-export function detectPlanFile(sessionName: string): string | null {
+export function detectPlanFile(
+  worktreePath: string,
+  sessionId: string,
+): string | null {
   const now = Date.now();
-  const cached = cache.get(sessionName);
+  const cached = cache.get(sessionId);
   if (cached && now - cached.cachedAt < CACHE_TTL_MS) {
     return cached.planFile;
   }
 
   let planFile: string | null = null;
   try {
-    // Capture the last 500 lines of scrollback from the session's pane
-    const scrollback = execFileSync(
-      "tmux",
-      ["capture-pane", "-t", sessionName, "-p", "-S", "-500"],
-      { encoding: "utf-8", timeout: 5000, stdio: ["pipe", "pipe", "ignore"] },
+    // Project key: worktree path with / replaced by -
+    const projectKey = worktreePath.replace(/\//g, "-");
+    const jsonlPath = join(
+      homedir(),
+      ".claude",
+      "projects",
+      projectKey,
+      `${sessionId}.jsonl`,
     );
-    const paths = extractPlanFiles(scrollback);
-    // Use the last matching path (most recent plan)
-    for (let i = paths.length - 1; i >= 0; i--) {
-      if (existsSync(paths[i])) {
-        planFile = paths[i];
+
+    if (!existsSync(jsonlPath)) {
+      cache.set(sessionId, { planFile: null, cachedAt: now });
+      return null;
+    }
+
+    const content = readFileSync(jsonlPath, "utf-8");
+    const lines = content.split("\n");
+
+    // Scan all lines for Write tool-use entries with plan file paths
+    const planPaths: string[] = [];
+    for (const line of lines) {
+      if (!line.trim()) continue;
+      try {
+        const entry = JSON.parse(line);
+        // Look for tool_use entries with type "Write" or tool name "Write"
+        if (
+          entry.type === "tool_use" &&
+          entry.name === "Write" &&
+          typeof entry.input?.file_path === "string"
+        ) {
+          const fp: string = entry.input.file_path;
+          if (fp.includes("/.claude/plans/") && fp.endsWith(".md")) {
+            planPaths.push(fp);
+          }
+        }
+      } catch {
+        // Skip malformed lines
+      }
+    }
+
+    // Use the last matching path that exists on disk
+    for (let i = planPaths.length - 1; i >= 0; i--) {
+      if (existsSync(planPaths[i])) {
+        planFile = planPaths[i];
         break;
       }
     }
   } catch {
-    // tmux capture-pane may fail if session is dead
+    // File read errors
   }
 
-  cache.set(sessionName, { planFile, cachedAt: now });
+  cache.set(sessionId, { planFile, cachedAt: now });
   return planFile;
 }
 
-/** Clear the cache entry for a session (call when state leaves "waiting"). */
-export function clearPlanCache(sessionName: string): void {
-  cache.delete(sessionName);
+/** Clear the cache entry for a session. */
+export function clearPlanCache(sessionId: string): void {
+  cache.delete(sessionId);
 }
