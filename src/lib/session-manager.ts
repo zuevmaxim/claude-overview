@@ -10,6 +10,7 @@ import { worktreeKey } from "./paths.js";
 import { getCurrentBranch } from "./git.js";
 import { detectPlanFile, clearPlanCache } from "./plan-detector.js";
 import { execFileAsync } from "./async-exec.js";
+import { syncSettingsAllow } from "./settings-sync.js";
 
 function sessionName(prefix: string, wt: WorktreeInfo): string {
   return `${prefix}${worktreeKey(wt)}`;
@@ -81,6 +82,13 @@ export class SessionManager {
 
   /** Create a new Claude session in the given worktree and attach to it. */
   createSession(wt: WorktreeInfo): string {
+    const mainPath = this.config.worktrees[0]?.path;
+    if (mainPath && mainPath !== wt.path) {
+      syncSettingsAllow([mainPath, wt.path]);
+    } else {
+      syncSettingsAllow([wt.path]);
+    }
+
     const name = sessionName(this.config.tmuxPrefix, wt);
     const dir = basename(wt.path);
     const title = wt.branch ? `${wt.branch} — ${dir}` : dir;
