@@ -1,6 +1,6 @@
 import { existsSync, readFileSync } from "node:fs";
-import { homedir } from "node:os";
 import { join } from "node:path";
+import { CLAUDE_PROJECTS_DIR } from "./paths.js";
 
 interface CacheEntry {
   planFile: string | null;
@@ -30,9 +30,7 @@ export function detectPlanFile(
     // Project key: worktree path with / replaced by -
     const projectKey = worktreePath.replace(/\//g, "-");
     const jsonlPath = join(
-      homedir(),
-      ".claude",
-      "projects",
+      CLAUDE_PROJECTS_DIR,
       projectKey,
       `${sessionId}.jsonl`,
     );

@@ -139,28 +139,7 @@ export class SessionManager {
   }
 
   /** Stage all changes and commit with the given message. */
-  commitAll(
-    wt: WorktreeInfo,
-    message: string,
-  ): { success: boolean; error?: string } {
-    try {
-      execFileSync("git", ["add", "-A"], {
-        cwd: wt.path,
-        stdio: "pipe",
-      });
-      execFileSync("git", ["commit", "-m", message], {
-        cwd: wt.path,
-        stdio: "pipe",
-      });
-      return { success: true };
-    } catch (err) {
-      const msg = err instanceof Error ? err.message : String(err);
-      return { success: false, error: msg };
-    }
-  }
-
-  /** Stage all changes and commit with the given message (async). */
-  async commitAllAsync(
+  async commitAll(
     wt: WorktreeInfo,
     message: string,
   ): Promise<{ success: boolean; error?: string }> {

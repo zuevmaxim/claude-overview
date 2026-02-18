@@ -1,6 +1,7 @@
 import { execFileSync } from "node:child_process";
 import { execFileAsync } from "./async-exec.js";
 
+
 export function getDefaultBranch(cwd: string): string | null {
   // Try symbolic-ref first (works when origin/HEAD is set)
   try {
@@ -47,26 +48,7 @@ export function getCurrentBranch(cwd: string): string | null {
   }
 }
 
-export function checkoutNewBranch(
-  cwd: string,
-  branchName: string,
-  baseBranch: string,
-): { success: true } | { success: false; error: string } {
-  try {
-    execFileSync("git", ["checkout", "-b", branchName, baseBranch], {
-      cwd,
-      encoding: "utf-8",
-      stdio: ["pipe", "pipe", "pipe"],
-    });
-    return { success: true };
-  } catch (err: unknown) {
-    const message =
-      err instanceof Error ? err.message : "Unknown git error";
-    return { success: false, error: message };
-  }
-}
-
-export async function checkoutNewBranchAsync(
+export async function checkoutNewBranch(
   cwd: string,
   branchName: string,
   baseBranch: string,

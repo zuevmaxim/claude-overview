@@ -1,9 +1,6 @@
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
-import { homedir } from "node:os";
 import { join } from "node:path";
-import { STATE_DIR, HOOKS_DIR } from "./lib/paths.js";
-
-const SETTINGS_PATH = join(homedir(), ".claude", "settings.json");
+import { STATE_DIR, HOOKS_DIR, CLAUDE_DIR, CLAUDE_SETTINGS_PATH } from "./lib/paths.js";
 
 /**
  * Hook script template.
@@ -76,14 +73,14 @@ export function ensureSetup(): void {
 
   // Read existing settings
   let settings: Record<string, unknown> = {};
-  if (existsSync(SETTINGS_PATH)) {
+  if (existsSync(CLAUDE_SETTINGS_PATH)) {
     try {
-      settings = JSON.parse(readFileSync(SETTINGS_PATH, "utf-8"));
+      settings = JSON.parse(readFileSync(CLAUDE_SETTINGS_PATH, "utf-8"));
     } catch {
       // Corrupted file, start fresh
     }
   } else {
-    mkdirSync(join(homedir(), ".claude"), { recursive: true });
+    mkdirSync(CLAUDE_DIR, { recursive: true });
   }
 
   const existingHooks = (settings["hooks"] ?? {}) as HooksMap;
@@ -109,6 +106,6 @@ export function ensureSetup(): void {
 
   if (changed) {
     settings["hooks"] = existingHooks;
-    writeFileSync(SETTINGS_PATH, JSON.stringify(settings, null, 2) + "\n");
+    writeFileSync(CLAUDE_SETTINGS_PATH, JSON.stringify(settings, null, 2) + "\n");
   }
 }

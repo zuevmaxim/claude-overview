@@ -61,30 +61,7 @@ export function suggestBranchName(cwd: string, dirName: string): string {
 /**
  * Create a new git worktree with a new branch based on baseBranch.
  */
-export function createWorktree(
-  mainRepoPath: string,
-  worktreePath: string,
-  branchName: string,
-  baseBranch: string,
-): { success: true } | { success: false; error: string } {
-  try {
-    execFileSync(
-      "git",
-      ["worktree", "add", "-b", branchName, worktreePath, baseBranch],
-      {
-        cwd: mainRepoPath,
-        encoding: "utf-8",
-        stdio: ["pipe", "pipe", "pipe"],
-      },
-    );
-    return { success: true };
-  } catch (err: unknown) {
-    const message = err instanceof Error ? err.message : "Unknown git error";
-    return { success: false, error: message };
-  }
-}
-
-export async function createWorktreeAsync(
+export async function createWorktree(
   mainRepoPath: string,
   worktreePath: string,
   branchName: string,

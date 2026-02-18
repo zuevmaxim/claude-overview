@@ -15,6 +15,7 @@ export interface UseSessionsResult {
     wt: WorktreeInfo,
     message: string,
   ) => Promise<{ success: boolean; error?: string }>;
+  addWorktree: (wt: WorktreeInfo) => void;
 }
 
 export function useSessions(config: Config): UseSessionsResult {
@@ -80,9 +81,18 @@ export function useSessions(config: Config): UseSessionsResult {
 
   const commitAll = useCallback(
     (wt: WorktreeInfo, message: string) => {
-      return managerRef.current.commitAllAsync(wt, message);
+      return managerRef.current.commitAll(wt, message);
     },
     [],
+  );
+
+  const addWorktree = useCallback(
+    (wt: WorktreeInfo) => {
+      if (!config.worktrees.some((w) => w.path === wt.path)) {
+        config.worktrees.push(wt);
+      }
+    },
+    [config],
   );
 
   return {
@@ -95,5 +105,6 @@ export function useSessions(config: Config): UseSessionsResult {
     availableWorktrees,
     hasUncommittedChanges,
     commitAll,
+    addWorktree,
   };
 }

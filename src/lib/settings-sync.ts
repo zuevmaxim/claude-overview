@@ -1,5 +1,5 @@
 import { existsSync, readFileSync, writeFileSync } from "node:fs";
-import { join } from "node:path";
+import { getWorktreeSettingsPath } from "./paths.js";
 
 interface Settings {
   permissions?: {
@@ -7,12 +7,6 @@ interface Settings {
     [key: string]: unknown;
   };
   [key: string]: unknown;
-}
-
-function getSettingsPath(worktreePath: string): string {
-  const localPath = join(worktreePath, ".claude", "settings.local.json");
-  if (existsSync(localPath)) return localPath;
-  return join(worktreePath, ".claude", "settings.json");
 }
 
 function readSettings(filePath: string): Settings {
@@ -34,7 +28,7 @@ export function syncSettingsAllow(worktreePaths: string[]): void {
   }> = [];
 
   for (const wtPath of worktreePaths) {
-    const settingsPath = getSettingsPath(wtPath);
+    const settingsPath = getWorktreeSettingsPath(wtPath);
     const settings = readSettings(settingsPath);
     const allow = settings.permissions?.allow ?? [];
     for (const entry of allow) allEntries.add(entry);

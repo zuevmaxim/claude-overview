@@ -2,7 +2,7 @@ import React, { useState, useCallback } from "react";
 import { Box, Text, useInput } from "ink";
 import { Spinner, TextInput } from "@inkjs/ui";
 import type { WorktreeInfo } from "../lib/types.js";
-import { checkoutNewBranchAsync, resetBranchHardAsync } from "../lib/git.js";
+import { checkoutNewBranch, resetBranchHardAsync } from "../lib/git.js";
 
 type Phase = "confirm" | "input" | "loading" | "error" | "confirm-reset";
 
@@ -33,7 +33,7 @@ export function BranchCheckPrompt({
 
       setIsResetting(false);
       setPhase("loading");
-      const result = await checkoutNewBranchAsync(worktree.path, trimmed, defaultBranch);
+      const result = await checkoutNewBranch(worktree.path, trimmed, defaultBranch);
       if (result.success) {
         onDone({ ...worktree, branch: trimmed, label: trimmed });
       } else {

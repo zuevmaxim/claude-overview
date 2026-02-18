@@ -9,7 +9,7 @@ import {
   suggestDirName,
   suggestBranchName,
   getWorktreeParentDir,
-  createWorktreeAsync,
+  createWorktree,
   listBranches,
 } from "../lib/worktree.js";
 
@@ -71,7 +71,7 @@ export function NewWorktreePrompt({ config, onDone, onCancel }: Props) {
       setPhase("loading");
 
       const worktreePath = join(parentDir, dirName);
-      const result = await createWorktreeAsync(mainRepoPath!, worktreePath, trimmed, defaultBranch);
+      const result = await createWorktree(mainRepoPath!, worktreePath, trimmed, defaultBranch);
 
       if (result.success) {
         onDone({ path: worktreePath, label: dirName, branch: trimmed });
