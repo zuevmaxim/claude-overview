@@ -115,6 +115,7 @@ export function App({ config }: Props) {
           const child = spawn(config.ideBinary, [session.worktree.path], {
             detached: true,
             stdio: "ignore",
+            shell: true,
           });
           child.on("error", (err) => {
             showMessage(`Failed to open IDE: ${err.message}`);
