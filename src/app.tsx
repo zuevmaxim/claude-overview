@@ -7,10 +7,11 @@ import { useSessions } from "./hooks/use-sessions.js";
 import { SessionList } from "./components/SessionList.js";
 import { WorktreeSelector } from "./components/WorktreeSelector.js";
 import { BranchCheckPrompt } from "./components/BranchCheckPrompt.js";
+import { NewWorktreePrompt } from "./components/NewWorktreePrompt.js";
 import { StatusBar } from "./components/StatusBar.js";
 import { getCurrentBranch, getDefaultBranch } from "./lib/git.js";
 
-type View = "list" | "worktree-picker" | "commit-input" | "branch-check";
+type View = "list" | "worktree-picker" | "commit-input" | "branch-check" | "new-worktree";
 
 interface Props {
   config: Config;
@@ -61,7 +62,7 @@ export function App({ config }: Props) {
         return;
       }
 
-      if (view === "branch-check") {
+      if (view === "branch-check" || view === "new-worktree") {
         return;
       }
       if (view !== "list") {
@@ -207,6 +208,24 @@ export function App({ config }: Props) {
     setView("list");
   }, []);
 
+  const handleCreateNewWorktree = useCallback(() => {
+    setView("new-worktree");
+  }, []);
+
+  const handleNewWorktreeDone = useCallback(
+    (newWt: WorktreeInfo) => {
+      config.worktrees.push(newWt);
+      const result = createSession(newWt);
+      setView("list");
+      if (result.success) {
+        showMessage(`Created worktree and started session in ${newWt.label}`);
+      } else {
+        showMessage(result.error ?? "Worktree created but session failed");
+      }
+    },
+    [config, createSession, showMessage],
+  );
+
   const waitingCount = sessions.filter((s) => s.state === "waiting").length;
   const plannedCount = sessions.filter((s) => s.state === "planned").length;
 
@@ -267,6 +286,13 @@ export function App({ config }: Props) {
         <WorktreeSelector
           worktrees={availableWorktrees()}
           onSelect={handleWorktreeSelect}
+          onCreateNew={handleCreateNewWorktree}
+          onCancel={() => setView("list")}
+        />
+      ) : view === "new-worktree" ? (
+        <NewWorktreePrompt
+          config={config}
+          onDone={handleNewWorktreeDone}
           onCancel={() => setView("list")}
         />
       ) : pendingWorktree && branchInfo ? (

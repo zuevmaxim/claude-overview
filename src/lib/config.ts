@@ -89,17 +89,8 @@ function discoverWorktrees(repoPath: string): WorktreeInfo[] {
   }
 }
 
-export function loadConfig(configPath?: string): Config {
-  const filePath = configPath ?? findConfigFile();
-  let raw: unknown = {};
-
-  if (filePath && existsSync(filePath)) {
-    raw = JSON.parse(readFileSync(filePath, "utf-8"));
-  }
-
-  const config = ConfigSchema.parse(raw);
-
-  // Auto-discover worktrees from explicit repoPath or CWD
+/** Re-discover worktrees and merge any new ones into config.worktrees. */
+export function refreshWorktrees(config: Config): void {
   const discoveryPath = config.worktreeDiscovery.enabled && config.worktreeDiscovery.repoPath
     ? config.worktreeDiscovery.repoPath
     : process.cwd();
@@ -111,6 +102,18 @@ export function loadConfig(configPath?: string): Config {
       config.worktrees.push(wt);
     }
   }
+}
+
+export function loadConfig(configPath?: string): Config {
+  const filePath = configPath ?? findConfigFile();
+  let raw: unknown = {};
+
+  if (filePath && existsSync(filePath)) {
+    raw = JSON.parse(readFileSync(filePath, "utf-8"));
+  }
+
+  const config = ConfigSchema.parse(raw);
+  refreshWorktrees(config);
 
   return config;
 }

@@ -2,6 +2,7 @@ import { execFileSync } from "node:child_process";
 import { unlinkSync } from "node:fs";
 import { basename } from "node:path";
 import type { Config, SessionInfo, WorktreeInfo } from "./types.js";
+import { refreshWorktrees } from "./config.js";
 import * as tmux from "./tmux.js";
 import { detectSessionState, stateFilePath } from "./state-detector.js";
 import { openTerminalAttached } from "./terminal.js";
@@ -151,6 +152,7 @@ export class SessionManager {
 
   /** Get worktrees that don't have a running session. */
   availableWorktrees(currentSessions: SessionInfo[]): WorktreeInfo[] {
+    refreshWorktrees(this.config);
     const activePaths = new Set(
       currentSessions.filter((s) => s.alive).map((s) => s.worktree.path),
     );
