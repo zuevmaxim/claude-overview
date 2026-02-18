@@ -1,4 +1,4 @@
-export type SessionState = "running" | "waiting" | "ended" | "unknown";
+export type SessionState = "running" | "waiting" | "planned" | "ended" | "unknown";
 
 export interface WorktreeInfo {
   path: string;
@@ -17,6 +17,8 @@ export interface SessionInfo {
   stateUpdatedAt: number;
   /** Whether the tmux session is alive */
   alive: boolean;
+  /** Path to a plan file when state is "planned" */
+  planFile?: string;
 }
 
 export interface HookStateFile {

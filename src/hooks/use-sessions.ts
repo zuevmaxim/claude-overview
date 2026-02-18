@@ -8,6 +8,7 @@ export interface UseSessionsResult {
   createSession: (wt: WorktreeInfo) => void;
   destroySession: (session: SessionInfo) => void;
   attachSession: (session: SessionInfo) => void;
+  openPlanFile: (session: SessionInfo) => boolean;
   availableWorktrees: () => WorktreeInfo[];
   hasUncommittedChanges: (wt: WorktreeInfo) => boolean;
   commitAll: (
@@ -56,6 +57,10 @@ export function useSessions(config: Config): UseSessionsResult {
     managerRef.current.attachSession(session);
   }, []);
 
+  const openPlanFile = useCallback((session: SessionInfo) => {
+    return managerRef.current.openPlanFile(session);
+  }, []);
+
   const availableWorktrees = useCallback(() => {
     return managerRef.current.availableWorktrees(sessions);
   }, [sessions]);
@@ -77,6 +82,7 @@ export function useSessions(config: Config): UseSessionsResult {
     createSession,
     destroySession,
     attachSession,
+    openPlanFile,
     availableWorktrees,
     hasUncommittedChanges,
     commitAll,

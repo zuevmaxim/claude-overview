@@ -5,6 +5,7 @@ import type { SessionInfo, SessionState } from "../lib/types.js";
 const STATE_ICONS: Record<SessionState, { icon: string; color: string }> = {
   running: { icon: "⚙", color: "cyan" },
   waiting: { icon: "●", color: "yellow" },
+  planned: { icon: "◆", color: "magenta" },
   ended: { icon: "✕", color: "gray" },
   unknown: { icon: "?", color: "gray" },
 };

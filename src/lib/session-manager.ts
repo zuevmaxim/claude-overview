@@ -7,6 +7,7 @@ import { detectSessionState, stateFilePath } from "./state-detector.js";
 import { openTerminalAttached } from "./terminal.js";
 import { worktreeKey } from "./paths.js";
 import { getCurrentBranch } from "./git.js";
+import { detectPlanFile, clearPlanCache } from "./plan-detector.js";
 
 function sessionName(prefix: string, wt: WorktreeInfo): string {
   return `${prefix}${worktreeKey(wt)}`;
@@ -30,7 +31,19 @@ export class SessionManager {
 
       if (!wt) continue; // tmux session doesn't match any known worktree
 
-      const { state, stateUpdatedAt } = detectSessionState(suffix);
+      let { state, stateUpdatedAt } = detectSessionState(suffix);
+
+      // Check for plan files in waiting sessions
+      let planFile: string | undefined;
+      if (state === "waiting") {
+        const detected = detectPlanFile(ts.name);
+        if (detected) {
+          state = "planned";
+          planFile = detected;
+        }
+      } else {
+        clearPlanCache(ts.name);
+      }
 
       // Re-read current branch so the display stays up-to-date after checkout
       const liveBranch = getCurrentBranch(wt.path);
@@ -45,6 +58,7 @@ export class SessionManager {
         state,
         stateUpdatedAt,
         alive: true,
+        planFile,
       });
     }
 
@@ -87,6 +101,17 @@ export class SessionManager {
   /** Attach to a session in a new Terminal.app window. */
   attachSession(session: SessionInfo): void {
     openTerminalAttached(session.name);
+  }
+
+  /** Open a plan file in the default app. Returns true on success. */
+  openPlanFile(session: SessionInfo): boolean {
+    if (!session.planFile) return false;
+    try {
+      execFileSync("open", [session.planFile], { timeout: 5000, stdio: "ignore" });
+      return true;
+    } catch {
+      return false;
+    }
   }
 
   /** Check if a worktree has uncommitted changes. */

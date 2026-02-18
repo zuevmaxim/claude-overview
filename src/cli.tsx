@@ -18,6 +18,7 @@ const cli = meow(
     j/k or arrows  Navigate sessions
     Enter           Attach to session (opens Terminal.app)
     n               New session (pick worktree)
+    p               Open plan file
     d               Delete/kill session
     r               Refresh
     q               Quit

@@ -24,6 +24,7 @@ export function App({ config }: Props) {
     createSession,
     destroySession,
     attachSession,
+    openPlanFile,
     availableWorktrees,
     hasUncommittedChanges,
     commitAll,
@@ -96,6 +97,17 @@ export function App({ config }: Props) {
             setCommitTarget(session);
             setView("commit-input");
           }
+        }
+      } else if (input === "p") {
+        const session = sessions[selectedIndex];
+        if (session?.state === "planned" && session.planFile) {
+          if (openPlanFile(session)) {
+            showMessage(`Opened plan for ${session.worktree.label}`);
+          } else {
+            showMessage("Failed to open plan file");
+          }
+        } else {
+          showMessage("No plan available");
         }
       } else if (input === "i") {
         const session = sessions[selectedIndex];
@@ -192,6 +204,7 @@ export function App({ config }: Props) {
   }, []);
 
   const waitingCount = sessions.filter((s) => s.state === "waiting").length;
+  const plannedCount = sessions.filter((s) => s.state === "planned").length;
 
   if (loading) {
     return (
@@ -263,7 +276,7 @@ export function App({ config }: Props) {
       ) : null}
 
       {/* Status bar */}
-      <StatusBar sessionCount={sessions.length} waitingCount={waitingCount} />
+      <StatusBar sessionCount={sessions.length} waitingCount={waitingCount} plannedCount={plannedCount} />
     </Box>
   );
 }
