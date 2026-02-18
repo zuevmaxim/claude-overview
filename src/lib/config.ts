@@ -81,7 +81,6 @@ function discoverWorktrees(repoPath: string): WorktreeInfo[] {
     const output = execSync("git worktree list --porcelain", {
       cwd: repoPath,
       encoding: "utf-8",
-      timeout: 5000,
       stdio: ["pipe", "pipe", "ignore"],
     });
     return parseWorktreePorcelain(output);

@@ -15,7 +15,6 @@ export function openTerminalAttached(sessionName: string): void {
     end tell
   `;
   execSync(`osascript -e '${script.replace(/'/g, "'\\''")}'`, {
-    timeout: 10000,
     stdio: "ignore",
   });
 }

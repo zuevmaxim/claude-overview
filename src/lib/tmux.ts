@@ -24,7 +24,7 @@ export function listSessions(prefix: string): TmuxSessionInfo[] {
   try {
     const output = execSync(
       `tmux list-sessions -F "#{session_name}\t#{session_created}\t#{session_attached}"`,
-      { encoding: "utf-8", timeout: 5000, stdio: ["pipe", "pipe", "ignore"] },
+      { encoding: "utf-8", stdio: ["pipe", "pipe", "ignore"] },
     );
     return parseTmuxOutput(output, prefix);
   } catch {
@@ -47,9 +47,8 @@ export function createSession(
     "-s", sessionName,
     "-c", cwd,
     "bash", "-c", shellCmd,
-  ], { timeout: 10000, stdio: "ignore" });
+  ], { stdio: "ignore" });
   execFileSync("tmux", ["set", "-t", sessionName, "mouse", "on"], {
-    timeout: 5000,
     stdio: "ignore",
   });
 }
@@ -58,7 +57,7 @@ export function createSession(
 export function killSession(sessionName: string): void {
   try {
     execFileSync("tmux", ["kill-session", "-t", sessionName], {
-      timeout: 5000, stdio: "ignore",
+      stdio: "ignore",
     });
   } catch {
     // Session might already be dead

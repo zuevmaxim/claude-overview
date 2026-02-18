@@ -109,7 +109,7 @@ export class SessionManager {
   openPlanFile(session: SessionInfo): boolean {
     if (!session.planFile) return false;
     try {
-      execFileSync("open", [session.planFile], { timeout: 5000, stdio: "ignore" });
+      execFileSync("open", [session.planFile], { stdio: "ignore" });
       return true;
     } catch {
       return false;
@@ -157,8 +157,8 @@ export class SessionManager {
     message: string,
   ): Promise<{ success: boolean; error?: string }> {
     try {
-      await execFileAsync("git", ["add", "-A"], { cwd: wt.path, timeout: 10000 });
-      await execFileAsync("git", ["commit", "-m", message], { cwd: wt.path, timeout: 10000 });
+      await execFileAsync("git", ["add", "-A"], { cwd: wt.path });
+      await execFileAsync("git", ["commit", "-m", message], { cwd: wt.path });
       return { success: true };
     } catch (err) {
       const msg = err instanceof Error ? err.message : String(err);

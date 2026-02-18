@@ -12,7 +12,7 @@ export function listBranches(cwd: string): string[] {
     const output = execFileSync(
       "git",
       ["branch", "--list", "--format=%(refname:short)"],
-      { cwd, encoding: "utf-8", timeout: 5000, stdio: ["pipe", "pipe", "pipe"] },
+      { cwd, encoding: "utf-8", stdio: ["pipe", "pipe", "pipe"] },
     );
     return output.trim().split("\n").filter(Boolean);
   } catch {
@@ -74,7 +74,6 @@ export function createWorktree(
       {
         cwd: mainRepoPath,
         encoding: "utf-8",
-        timeout: 30000,
         stdio: ["pipe", "pipe", "pipe"],
       },
     );
@@ -95,7 +94,7 @@ export async function createWorktreeAsync(
     await execFileAsync(
       "git",
       ["worktree", "add", "-b", branchName, worktreePath, baseBranch],
-      { cwd: mainRepoPath, timeout: 30000 },
+      { cwd: mainRepoPath },
     );
     return { success: true };
   } catch (err: unknown) {

@@ -7,7 +7,7 @@ export function getDefaultBranch(cwd: string): string | null {
     const ref = execFileSync(
       "git",
       ["symbolic-ref", "refs/remotes/origin/HEAD"],
-      { cwd, encoding: "utf-8", timeout: 5000, stdio: ["pipe", "pipe", "pipe"] },
+      { cwd, encoding: "utf-8", stdio: ["pipe", "pipe", "pipe"] },
     ).trim();
     // ref looks like "refs/remotes/origin/main"
     const branch = ref.replace("refs/remotes/origin/", "");
@@ -21,7 +21,7 @@ export function getDefaultBranch(cwd: string): string | null {
       execFileSync(
         "git",
         ["rev-parse", "--verify", `refs/heads/${candidate}`],
-        { cwd, encoding: "utf-8", timeout: 5000, stdio: ["pipe", "pipe", "pipe"] },
+        { cwd, encoding: "utf-8", stdio: ["pipe", "pipe", "pipe"] },
       );
       return candidate;
     } catch {
@@ -37,7 +37,7 @@ export function getCurrentBranch(cwd: string): string | null {
     const branch = execFileSync(
       "git",
       ["rev-parse", "--abbrev-ref", "HEAD"],
-      { cwd, encoding: "utf-8", timeout: 5000, stdio: ["pipe", "pipe", "pipe"] },
+      { cwd, encoding: "utf-8", stdio: ["pipe", "pipe", "pipe"] },
     ).trim();
     // Detached HEAD returns "HEAD"
     if (!branch || branch === "HEAD") return null;
@@ -56,7 +56,6 @@ export function checkoutNewBranch(
     execFileSync("git", ["checkout", "-b", branchName, baseBranch], {
       cwd,
       encoding: "utf-8",
-      timeout: 10000,
       stdio: ["pipe", "pipe", "pipe"],
     });
     return { success: true };
@@ -75,7 +74,6 @@ export async function checkoutNewBranchAsync(
   try {
     await execFileAsync("git", ["checkout", "-b", branchName, baseBranch], {
       cwd,
-      timeout: 10000,
     });
     return { success: true };
   } catch (err: unknown) {
