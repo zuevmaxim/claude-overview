@@ -26,7 +26,6 @@ export function StatusBar({ sessionCount, waitingCount, plannedCount }: Props) {
         <Text bold>p</Text> open plan {"  "}
         <Text bold>i</Text> idea {"  "}
         <Text bold>d</Text> delete {"  "}
-        <Text bold>r</Text> refresh {"  "}
         <Text bold>q</Text> quit
       </Text>
       <Text>

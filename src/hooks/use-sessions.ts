@@ -15,7 +15,6 @@ export interface UseSessionsResult {
     wt: WorktreeInfo,
     message: string,
   ) => { success: boolean; error?: string };
-  refresh: () => void;
 }
 
 export function useSessions(config: Config): UseSessionsResult {
@@ -86,6 +85,5 @@ export function useSessions(config: Config): UseSessionsResult {
     availableWorktrees,
     hasUncommittedChanges,
     commitAll,
-    refresh: doRefresh,
   };
 }

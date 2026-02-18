@@ -28,7 +28,6 @@ export function App({ config }: Props) {
     availableWorktrees,
     hasUncommittedChanges,
     commitAll,
-    refresh,
   } = useSessions(config);
 
   const [selectedIndex, setSelectedIndex] = useState(0);
@@ -125,9 +124,6 @@ export function App({ config }: Props) {
           setPendingDelete(session);
           setPendingDeleteDirty(hasUncommittedChanges(session.worktree));
         }
-      } else if (input === "r") {
-        refresh();
-        showMessage("Refreshed");
       } else if (input === "q") {
         exit();
       }
