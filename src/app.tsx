@@ -112,12 +112,15 @@ export function App({ config }: Props) {
       } else if (input === "i") {
         const session = sessions[selectedIndex];
         if (session) {
-          const child = spawn("idea", [session.worktree.path], {
+          const child = spawn(config.ideBinary, [session.worktree.path], {
             detached: true,
             stdio: "ignore",
           });
+          child.on("error", (err) => {
+            showMessage(`Failed to open IDE: ${err.message}`);
+          });
           child.unref();
-          showMessage(`Opening ${session.worktree.label} in IDEA`);
+          showMessage(`Opening ${session.worktree.label} in IDE`);
         }
       } else if (input === "d") {
         const session = sessions[selectedIndex];

@@ -37,4 +37,5 @@ export interface Config {
   tmuxPrefix: string;
   pollIntervalMs: number;
   claudeBinary: string;
+  ideBinary: string;
 }

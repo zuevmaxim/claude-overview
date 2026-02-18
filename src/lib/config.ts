@@ -22,6 +22,7 @@ const ConfigSchema = z.object({
   tmuxPrefix: z.string().default("cov_"),
   pollIntervalMs: z.number().default(1500),
   claudeBinary: z.string().default("claude"),
+  ideBinary: z.string().default("idea"),
 });
 
 const CONFIG_FILENAMES = [
