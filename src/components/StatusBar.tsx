@@ -18,14 +18,14 @@ export function StatusBar({ sessionCount, waitingCount }: Props) {
       justifyContent="space-between"
     >
       <Text>
-        <Text dimColor>j/k</Text> navigate {"  "}
-        <Text dimColor>Enter</Text> attach {"  "}
-        <Text dimColor>n</Text> new {"  "}
-        <Text dimColor>c</Text> commit {"  "}
-        <Text dimColor>i</Text> idea {"  "}
-        <Text dimColor>d</Text> delete {"  "}
-        <Text dimColor>r</Text> refresh {"  "}
-        <Text dimColor>q</Text> quit
+        <Text bold>j/k</Text> navigate {"  "}
+        <Text bold>Enter</Text> attach {"  "}
+        <Text bold>n</Text> new {"  "}
+        <Text bold>c</Text> commit {"  "}
+        <Text bold>i</Text> idea {"  "}
+        <Text bold>d</Text> delete {"  "}
+        <Text bold>r</Text> refresh {"  "}
+        <Text bold>q</Text> quit
       </Text>
       <Text>
         {sessionCount > 0 && (

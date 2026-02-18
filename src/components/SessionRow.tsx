@@ -28,7 +28,7 @@ export function SessionRow({ session, selected }: Props) {
       <Text color={color}>{icon} </Text>
       <Text bold>{label.padEnd(20)}</Text>
       {branch && (
-        <Text color="green" dimColor>
+        <Text color="green">
           {` ${branch}`.padEnd(25)}
         </Text>
       )}
