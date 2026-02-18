@@ -1,6 +1,6 @@
 import React, { useState, useCallback, useMemo } from "react";
 import { Box, Text, useInput } from "ink";
-import { TextInput } from "@inkjs/ui";
+import { Spinner, TextInput } from "@inkjs/ui";
 import { join } from "node:path";
 import { existsSync } from "node:fs";
 import type { Config, WorktreeInfo } from "../lib/types.js";
@@ -9,11 +9,11 @@ import {
   suggestDirName,
   suggestBranchName,
   getWorktreeParentDir,
-  createWorktree,
+  createWorktreeAsync,
   listBranches,
 } from "../lib/worktree.js";
 
-type Phase = "dir-input" | "branch-input" | "error";
+type Phase = "dir-input" | "branch-input" | "loading" | "error";
 
 interface Props {
   config: Config;
@@ -58,7 +58,7 @@ export function NewWorktreePrompt({ config, onDone, onCancel }: Props) {
   );
 
   const handleBranchSubmit = useCallback(
-    (value: string) => {
+    async (value: string) => {
       const trimmed = value.trim();
       if (!trimmed) return;
 
@@ -68,9 +68,10 @@ export function NewWorktreePrompt({ config, onDone, onCancel }: Props) {
         return;
       }
       setValidationError("");
+      setPhase("loading");
 
       const worktreePath = join(parentDir, dirName);
-      const result = createWorktree(mainRepoPath!, worktreePath, trimmed, defaultBranch);
+      const result = await createWorktreeAsync(mainRepoPath!, worktreePath, trimmed, defaultBranch);
 
       if (result.success) {
         onDone({ path: worktreePath, label: dirName, branch: trimmed });
@@ -148,6 +149,12 @@ export function NewWorktreePrompt({ config, onDone, onCancel }: Props) {
             <Text dimColor>Enter to confirm · Escape to cancel</Text>
           </Box>
         </>
+      )}
+
+      {phase === "loading" && (
+        <Box>
+          <Spinner label="Creating worktree…" />
+        </Box>
       )}
 
       {phase === "error" && (

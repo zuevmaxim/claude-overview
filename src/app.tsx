@@ -1,7 +1,7 @@
 import React, { useState, useCallback } from "react";
 import { spawn } from "node:child_process";
 import { Box, Text, useInput, useApp } from "ink";
-import { TextInput } from "@inkjs/ui";
+import { Spinner, TextInput } from "@inkjs/ui";
 import type { Config, SessionInfo, WorktreeInfo } from "./lib/types.js";
 import { useSessions } from "./hooks/use-sessions.js";
 import { SessionList } from "./components/SessionList.js";
@@ -37,6 +37,7 @@ export function App({ config }: Props) {
   const [pendingDelete, setPendingDelete] = useState<SessionInfo | null>(null);
   const [pendingDeleteDirty, setPendingDeleteDirty] = useState(false);
   const [commitTarget, setCommitTarget] = useState<SessionInfo | null>(null);
+  const [committing, setCommitting] = useState(false);
   const [pendingWorktree, setPendingWorktree] = useState<WorktreeInfo | null>(null);
   const [branchInfo, setBranchInfo] = useState<{ current: string; default: string } | null>(null);
 
@@ -148,7 +149,7 @@ export function App({ config }: Props) {
   );
 
   const handleCommitSubmit = useCallback(
-    (message: string) => {
+    async (message: string) => {
       const trimmed = message.trim();
       if (!trimmed || !commitTarget) {
         showMessage("Commit cancelled");
@@ -156,7 +157,9 @@ export function App({ config }: Props) {
         setView("list");
         return;
       }
-      const result = commitAll(commitTarget.worktree, trimmed);
+      setCommitting(true);
+      const result = await commitAll(commitTarget.worktree, trimmed);
+      setCommitting(false);
       if (result.success) {
         showMessage(`Committed in ${commitTarget.worktree.label}`);
       } else {
@@ -271,15 +274,21 @@ export function App({ config }: Props) {
       {/* Commit input */}
       {view === "commit-input" && commitTarget && (
         <Box paddingX={1} flexDirection="column">
-          <Text color="cyan">Commit changes in {commitTarget.worktree.label}:</Text>
-          <Box>
-            <Text dimColor>{"› "}</Text>
-            <TextInput
-              placeholder="Enter commit message…"
-              onSubmit={handleCommitSubmit}
-            />
-          </Box>
-          <Text dimColor>Enter to commit · Escape to cancel</Text>
+          {committing ? (
+            <Spinner label="Committing…" />
+          ) : (
+            <>
+              <Text color="cyan">Commit changes in {commitTarget.worktree.label}:</Text>
+              <Box>
+                <Text dimColor>{"› "}</Text>
+                <TextInput
+                  placeholder="Enter commit message…"
+                  onSubmit={handleCommitSubmit}
+                />
+              </Box>
+              <Text dimColor>Enter to commit · Escape to cancel</Text>
+            </>
+          )}
         </Box>
       )}
 

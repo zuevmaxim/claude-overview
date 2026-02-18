@@ -1,10 +1,10 @@
 import React, { useState, useCallback } from "react";
 import { Box, Text, useInput } from "ink";
-import { TextInput } from "@inkjs/ui";
+import { Spinner, TextInput } from "@inkjs/ui";
 import type { WorktreeInfo } from "../lib/types.js";
-import { checkoutNewBranch } from "../lib/git.js";
+import { checkoutNewBranchAsync } from "../lib/git.js";
 
-type Phase = "confirm" | "input" | "error";
+type Phase = "confirm" | "input" | "loading" | "error";
 
 interface Props {
   worktree: WorktreeInfo;
@@ -26,11 +26,12 @@ export function BranchCheckPrompt({
   const [branchName, setBranchName] = useState("");
 
   const handleCheckout = useCallback(
-    (name: string) => {
+    async (name: string) => {
       const trimmed = name.trim();
       if (!trimmed) return;
 
-      const result = checkoutNewBranch(worktree.path, trimmed, defaultBranch);
+      setPhase("loading");
+      const result = await checkoutNewBranchAsync(worktree.path, trimmed, defaultBranch);
       if (result.success) {
         onDone({ ...worktree, branch: trimmed, label: trimmed });
       } else {
@@ -93,6 +94,12 @@ export function BranchCheckPrompt({
             <Text dimColor>Press Enter to confirm, Escape to cancel</Text>
           </Box>
         </>
+      )}
+
+      {phase === "loading" && (
+        <Box>
+          <Spinner label="Checking out branch…" />
+        </Box>
       )}
 
       {phase === "error" && (

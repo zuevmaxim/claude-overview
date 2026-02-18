@@ -14,7 +14,7 @@ export interface UseSessionsResult {
   commitAll: (
     wt: WorktreeInfo,
     message: string,
-  ) => { success: boolean; error?: string };
+  ) => Promise<{ success: boolean; error?: string }>;
 }
 
 export function useSessions(config: Config): UseSessionsResult {
@@ -80,7 +80,7 @@ export function useSessions(config: Config): UseSessionsResult {
 
   const commitAll = useCallback(
     (wt: WorktreeInfo, message: string) => {
-      return managerRef.current.commitAll(wt, message);
+      return managerRef.current.commitAllAsync(wt, message);
     },
     [],
   );

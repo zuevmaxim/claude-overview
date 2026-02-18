@@ -2,6 +2,7 @@ import { execFileSync } from "node:child_process";
 import { existsSync } from "node:fs";
 import { basename, dirname, join } from "node:path";
 import type { Config } from "./types.js";
+import { execFileAsync } from "./async-exec.js";
 
 /**
  * List all local branch names in the repo.
@@ -76,6 +77,25 @@ export function createWorktree(
         timeout: 30000,
         stdio: ["pipe", "pipe", "pipe"],
       },
+    );
+    return { success: true };
+  } catch (err: unknown) {
+    const message = err instanceof Error ? err.message : "Unknown git error";
+    return { success: false, error: message };
+  }
+}
+
+export async function createWorktreeAsync(
+  mainRepoPath: string,
+  worktreePath: string,
+  branchName: string,
+  baseBranch: string,
+): Promise<{ success: true } | { success: false; error: string }> {
+  try {
+    await execFileAsync(
+      "git",
+      ["worktree", "add", "-b", branchName, worktreePath, baseBranch],
+      { cwd: mainRepoPath, timeout: 30000 },
     );
     return { success: true };
   } catch (err: unknown) {
