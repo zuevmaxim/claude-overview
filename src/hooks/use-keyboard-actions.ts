@@ -4,6 +4,20 @@ import type { SessionInfo, WorktreeInfo } from "../lib/types.js";
 
 type View = "list" | "worktree-picker" | "commit-input" | "branch-check" | "new-worktree";
 
+// Russian keyboard layout → English equivalent
+const russianToEnglish: Record<string, string> = {
+  й: "q", ц: "w", у: "e", к: "r", е: "t", н: "y", г: "u", ш: "i", щ: "o", з: "p",
+  ф: "a", ы: "s", в: "d", а: "f", п: "g", р: "h", о: "j", л: "k", д: "l",
+  я: "z", ч: "x", с: "c", м: "v", и: "b", т: "n", ь: "m",
+  Й: "Q", Ц: "W", У: "E", К: "R", Е: "T", Н: "Y", Г: "U", Ш: "I", Щ: "O", З: "P",
+  Ф: "A", Ы: "S", В: "D", А: "F", П: "G", Р: "H", О: "J", Л: "K", Д: "L",
+  Я: "Z", Ч: "X", С: "C", М: "V", И: "B", Т: "N", Ь: "M",
+};
+
+function normalizeInput(input: string): string {
+  return russianToEnglish[input] ?? input;
+}
+
 interface UseKeyboardActionsParams {
   view: View;
   setView: (v: View) => void;
@@ -51,7 +65,9 @@ export function useKeyboardActions(params: UseKeyboardActionsParams): void {
   } = params;
 
   useInput(
-    (input, key) => {
+    (rawInput, key) => {
+      const input = normalizeInput(rawInput);
+
       // Handle delete confirmation
       if (pendingDelete) {
         if (input === "y") {
@@ -136,6 +152,8 @@ export function useKeyboardActions(params: UseKeyboardActionsParams): void {
         }
       } else if (input === "q") {
         exit();
+      } else if (input && !key.ctrl && !key.meta) {
+        showMessage(`Unknown key: "${rawInput}"`);
       }
     },
     { isActive: view !== "commit-input" },
